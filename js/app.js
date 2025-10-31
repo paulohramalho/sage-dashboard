@@ -58,10 +58,15 @@ class App {
 
         // Logout
         document.querySelector('.logout-btn')?.addEventListener('click', () => {
-            if (confirm('Tem certeza que deseja sair?')) {
-                alert('Logout realizado com sucesso!');
-                // Aqui você redirecionaria para a página de login
-            }
+            exibirConfirmacao({
+                title: 'Deseja sair?',
+                message: 'Você será desconectado da sua conta. Deseja continuar?',
+                type: 'question',
+                confirmText: 'Sim, sair agora',
+                cancelText: 'Não, continuar logado(a)',
+                onConfirm: () => {
+                }
+            });
         });
     }
 
