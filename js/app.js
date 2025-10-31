@@ -683,7 +683,7 @@ class App {
                     </div>
                     <div class="form-actions">
                         <button type="button" class="btn btn-outline" onclick="document.getElementById('formModal').classList.remove('show')">Cancelar</button>
-                        <button type="submit" class="btn btn-primary">${setor ? 'Atualizar Setor' : 'Salvar Setor'}</button>
+                        <button type="submit" class="btn btn-primary">${setor ? 'Atualizar' : 'Salvar'}</button>
                     </div>
                 </form>
             </div>
@@ -888,7 +888,7 @@ class App {
             <tr>
                 <td>${s.name || '-'}</td>
                 <td>${s.description || '-'}</td>
-                <td>${s.department?.name || '-'}</td>
+                <td><span class="badge badge-info">${s.department?.name || '-'}</span></td>
                 <td>
                     <div class="cell-actions">
                         <button class="action-btn action-btn-edit" 
@@ -967,7 +967,7 @@ class App {
                     </div>
                     <div class="form-actions">
                         <button type="button" class="btn btn-outline" onclick="document.getElementById('formModal').classList.remove('show')">Cancelar</button>
-                        <button type="submit" class="btn btn-primary">${sala ? 'Atualizar Sala' : 'Salvar Sala'}</button>
+                        <button type="submit" class="btn btn-primary">${sala ? 'Atualizar' : 'Salvar'}</button>
                     </div>
                 </form>
             </div>
@@ -1052,88 +1052,201 @@ class App {
         });
     }
 
-    loadDispositivos() {
-        if (!this.dispositivosPagination) {
-            this.dispositivosPagination = new Pagination('dispositivos', 10);
-            this.dispositivosPagination.setRenderCallback(() => this.renderDispositivosTable());
-        }
-        this.dispositivosPagination.setItems(this.data.dispositivos);
-        window.currentPagination = this.dispositivosPagination;
-        this.renderDispositivosTable();
-    }
-    
-    renderDispositivosTable() {
-        const content = document.getElementById('page-content');
-        const currentItems = this.dispositivosPagination.getCurrentPageItems();
-        
-        content.innerHTML = `
-            <div class="dispositivos-page">
-                <div class="card-header">
-                    <h2>Gerenciar Dispositivos</h2>
-                    <button class="btn btn-primary" onclick="app.openDispositivoForm()">+ Novo Dispositivo</button>
-                </div>
+    async loadDispositivos(page = 0, name = '', deviceTypeId = '') {
+        try {
+            this.currentSearch = name;
+            this.currentDeviceTypeFilter = deviceTypeId;
+            const size = 10;
+            
+            let response;
+            
+            // Se tem filtro de tipo de dispositivo, usa o endpoint específico
+            if (deviceTypeId) {
+                const query = new URLSearchParams({
+                    name: name || '',
+                    page,
+                    size
+                }).toString();
+                response = await callApi(`/device-type/${deviceTypeId}/device?${query}`, { method: 'GET' });
+            } else {
+                // Senão, usa o endpoint geral
+                const query = new URLSearchParams({
+                    name: name || '',
+                    page,
+                    size
+                }).toString();
+                response = await callApi(`/device?${query}`, { method: 'GET' });
+            }
 
-                <div class="table-container">
-                    <div class="table-header">
-                        <h3>Lista de Dispositivos</h3>
-                        <div class="table-search">
-                            <input type="text" placeholder="Buscar dispositivo..." id="searchDispositivos">
+            // Cria a paginação se ainda não existir
+            if (!this.dispositivosPagination) {
+                this.dispositivosPagination = new Pagination('dispositivos', size);
+                this.dispositivosPagination.setRemoteLoader((newPage) => {
+                    const searchTerm = document.getElementById('searchDispositivos')?.value || '';
+                    const typeId = document.getElementById('filterDeviceType')?.value || '';
+                    return this.loadDispositivos(newPage, searchTerm, typeId);
+                });
+            }
+
+            // Atualiza dados da paginação
+            this.dispositivosPagination.updateFromApiResponse(response);
+
+            // Armazena os dispositivos recebidos
+            this.data = this.data || {};
+            this.data.dispositivos = response.content || [];
+
+            // Renderiza a tabela
+            this.renderDispositivosTable();
+
+        } catch (error) {
+            console.error("Erro ao carregar dispositivos:", error);
+        }
+    }
+
+    async renderDispositivosTable() {
+        const content = document.getElementById('page-content');
+        const items = this.data?.dispositivos || [];
+
+        const isFirstRender = !document.getElementById('searchDispositivos');
+
+        if (isFirstRender) {
+            // Carrega os tipos de dispositivos para o filtro
+            let tiposDispositivos = [];
+            try {
+                const tiposResponse = await callApi('/device-type?page=0&size=1000', { method: 'GET' });
+                tiposDispositivos = tiposResponse.content || [];
+            } catch (error) {
+                console.error('Erro ao carregar tipos de dispositivos:', error);
+            }
+
+            content.innerHTML = `
+                <div class="dispositivos-page">
+                    <div class="card-header">
+                        <h2>Gerenciar Dispositivos</h2>
+                        <button class="btn btn-primary" onclick="app.openDispositivoForm()">+ Novo Dispositivo</button>
+                    </div>
+
+                    <div class="table-container">
+                        <div class="table-header">
+                            <h3>Lista de Dispositivos</h3>
+                            <div class="table-search" style="display: flex; gap: 10px; align-items: center;">
+                                <select id="filterDeviceType" class="select2-search" style="min-width: 200px;">
+                                    <option value="">Todos os tipos</option>
+                                    ${tiposDispositivos.map(t => `
+                                        <option value="${t.id}" ${this.currentDeviceTypeFilter === t.id ? 'selected' : ''}>
+                                            ${t.name}
+                                        </option>
+                                    `).join('')}
+                                </select>
+                                <input type="text" placeholder="Buscar dispositivo..." id="searchDispositivos" value="${this.currentSearch || ''}">
+                            </div>
+                        </div>
+
+                        <div class="table-wrapper">
+                            <table id="dispositivosTable">
+                                <thead>
+                                    <tr>
+                                        <th>Nome</th>
+                                        <th>Potência (W)</th>
+                                        <th>Tipo</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="dispositivosTableBody">
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="pagination" id="dispositivosPagination">
                         </div>
                     </div>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Nome</th>
-                                <th>Potência (kW)</th>
-                                <th>Tipo</th>
-                                <th>Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${currentItems.length > 0 ? currentItems.map(d => `
-                                <tr>
-                                    <td>${d.nome}</td>
-                                    <td>${d.potencia}</td>
-                                    <td><span class="badge badge-info">${d.tipo}</span></td>
-                                        <td>
-                                            <div class="cell-actions">
-                                                <button class="action-btn action-btn-edit" 
-                                                        onclick="app.editSetor('${s.id}')">
-                                                    <i class="fas fa-edit"></i>
-                                                </button>
-                                                <button class="action-btn action-btn-delete" 
-                                                        onclick="app.deleteSetor('${s.id}')">
-                                                    <i class="fas fa-trash-alt"></i>
-                                                </button>
-                                            </div>
-                                        </td>
-                                </tr>
-                            `).join('') : `
-                                <tr>
-                                    <td colspan="5" style="text-align: center; padding: 40px; color: #999;">
-                                        Nenhum dispositivo encontrado
-                                    </td>
-                                </tr>
-                            `}
-                        </tbody>
-                    </table>
-                    ${this.dispositivosPagination.renderPaginationControls()}
                 </div>
-            </div>
+            `;
+
+            // Inicializa Select2 SEM AJAX (apenas com busca local)
+            $('#filterDeviceType').select2({
+                placeholder: 'Todos os tipos',
+                allowClear: true,
+                language: {
+                    noResults: function() {
+                        return "Nenhum tipo encontrado";
+                    },
+                    searching: function() {
+                        return "Buscando...";
+                    }
+                }
+            });
+
+            // Eventos
+            const input = document.getElementById('searchDispositivos');
+            input.oninput = this.debounce(async (e) => {
+                const searchTerm = e.target.value.trim();
+                const typeId = $('#filterDeviceType').val() || '';
+                await this.loadDispositivos(0, searchTerm, typeId);
+            }, 400);
+
+            $('#filterDeviceType').on('change', async (e) => {
+                const typeId = e.target.value;
+                const searchTerm = document.getElementById('searchDispositivos')?.value || '';
+                await this.loadDispositivos(0, searchTerm, typeId);
+            });
+        }
+
+        // Atualiza apenas o tbody
+        const tbody = document.getElementById('dispositivosTableBody');
+        tbody.innerHTML = items.length > 0 ? items.map(d => `
+            <tr>
+                <td>${d.name || '-'}</td>
+                <td>${d.power ? d.power.toFixed(2) : '-'}</td>
+                <td><span class="badge badge-info">${d.deviceType?.name || '-'}</span></td>
+                <td>
+                    <div class="cell-actions">
+                        <button class="action-btn action-btn-edit" 
+                                onclick="app.editDispositivo('${d.id}')">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="action-btn action-btn-delete" 
+                                onclick="app.deleteDispositivo('${d.id}')">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `).join('') : `
+            <tr>
+                <td colspan="4" style="text-align: center; padding: 40px; color: #999;">
+                    Nenhum dispositivo encontrado
+                </td>
+            </tr>
         `;
 
-        document.getElementById('searchDispositivos')?.addEventListener('keyup', (e) => {
-            const search = e.target.value;
-            this.dispositivosPagination.filterItems(search);
-            this.renderDispositivosTable();
-        });
+        const paginationDiv = document.getElementById('dispositivosPagination');
+        paginationDiv.innerHTML = this.dispositivosPagination.renderPaginationControls();
     }
 
-    openDispositivoForm(dispositivoId = null) {
+    async openDispositivoForm(dispositivoId = null) {
         const modal = document.getElementById('formModal');
         const form = document.getElementById('modal-form');
-        const dispositivo = dispositivoId ? this.data.dispositivos.find(d => d.id === dispositivoId) : null;
-        
+        let dispositivo = null;
+
+        // Carrega os tipos de dispositivos para o select
+        let tiposDispositivos = [];
+        try {
+            const tiposResponse = await callApi('/device-type?page=0&size=1000', { method: 'GET' });
+            tiposDispositivos = tiposResponse.content || [];
+        } catch (error) {
+            console.error('Erro ao carregar tipos de dispositivos:', error);
+        }
+
+        // Se for edição, busca o dispositivo pelo ID
+        if (dispositivoId) {
+            try {
+                dispositivo = await callApi(`/device/${dispositivoId}`, { method: 'GET' });
+            } catch (error) {
+                console.error('Erro ao carregar dispositivo:', error);
+                return;
+            }
+        }
+
         form.innerHTML = `
             <div class="form-card">
                 <div class="form-card-header">
@@ -1143,34 +1256,90 @@ class App {
                 <form id="dispositivoForm">
                     <div class="form-group">
                         <label>Nome <span class="required">*</span></label>
-                        <input type="text" name="nome" value="${dispositivo ? dispositivo.nome : ''}" required>
+                        <input type="text" name="name" value="${dispositivo ? dispositivo.name : ''}" required>
                     </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Potência (kW) <span class="required">*</span></label>
-                            <input type="number" name="potencia" step="0.1" value="${dispositivo ? dispositivo.potencia : ''}" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Tipo <span class="required">*</span></label>
-                            <select name="fk_tipo_dispositivo" required>
-                                <option value="">Selecione um tipo</option>
-                                ${this.data.tiposDispositivos.map(t => `<option value="${t.id}" ${dispositivo && dispositivo.tipo === t.nome ? 'selected' : ''}>${t.nome}</option>`).join('')}
-                            </select>
-                        </div>
+                    <div class="form-group">
+                        <label>Potência (W) <span class="required">*</span></label>
+                        <input type="number" name="power" step="0.01" value="${dispositivo ? dispositivo.power : ''}" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Tipo de Dispositivo <span class="required">*</span></label>
+                        <select name="deviceTypeId" id="formDeviceTypeSelect" class="select2-search" ${dispositivo ? 'disabled' : ''}>
+                            <option value="">Selecione um tipo</option>
+                            ${tiposDispositivos.map(t => `
+                                <option value="${t.id}" ${dispositivo && dispositivo.deviceType?.id === t.id ? 'selected' : ''}>
+                                    ${t.name}
+                                </option>
+                            `).join('')}
+                        </select>
+                        ${dispositivo ? '<small style="color: #666; font-size: 12px; margin-top: 5px; display: block;">O tipo não pode ser alterado</small>' : ''}
                     </div>
                     <div class="form-actions">
                         <button type="button" class="btn btn-outline" onclick="document.getElementById('formModal').classList.remove('show')">Cancelar</button>
-                        <button type="submit" class="btn btn-primary">${dispositivo ? 'Atualizar Dispositivo' : 'Salvar Dispositivo'}</button>
+                        <button type="submit" class="btn btn-primary">${dispositivo ? 'Atualizar' : 'Salvar'}</button>
                     </div>
                 </form>
             </div>
         `;
+
         modal.classList.add('show');
 
-        document.getElementById('dispositivoForm').addEventListener('submit', (e) => {
+        // Inicializa o Select2 no formulário (apenas se for novo dispositivo)
+        if (!dispositivo) {
+            $('#formDeviceTypeSelect').select2({
+                placeholder: 'Selecione um tipo',
+                dropdownParent: $('#formModal'),
+                language: {
+                    noResults: function() {
+                        return "Nenhum tipo encontrado";
+                    },
+                    searching: function() {
+                        return "Buscando...";
+                    }
+                }
+            });
+        }
+
+        // Captura o envio do formulário
+        document.getElementById('dispositivoForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            alert(`Dispositivo ${dispositivo ? 'atualizado' : 'salvo'} com sucesso!`);
-            modal.classList.remove('show');
+
+            const formData = new FormData(e.target);
+            const payload = Object.fromEntries(formData.entries());
+
+            try {
+                if (dispositivoId) {
+                    // Atualizar dispositivo existente (PUT) - sem deviceTypeId
+                    const updatePayload = {
+                        name: payload.name,
+                        power: parseFloat(payload.power)
+                    };
+                    await callApi(`/device/${dispositivoId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(updatePayload)
+                    });
+                    exibirSucesso('Dispositivo atualizado com sucesso!');
+                } else {
+                    // Criar novo dispositivo (POST) - com deviceTypeId
+                    const createPayload = {
+                        name: payload.name,
+                        power: parseFloat(payload.power),
+                        deviceTypeId: payload.deviceTypeId
+                    };
+                    await callApi(`/device`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(createPayload)
+                    });
+                    exibirSucesso('Dispositivo criado com sucesso!');
+                }
+
+                modal.classList.remove('show');
+                await this.loadDispositivos(0);
+            } catch (error) {
+                console.error('Erro ao salvar dispositivo:', error);
+            }
         });
     }
 
@@ -1178,10 +1347,23 @@ class App {
         this.openDispositivoForm(id);
     }
 
-    deleteDispositivo(id) {
-        if (confirm('Tem certeza que deseja deletar este dispositivo?')) {
-            alert(`Dispositivo ${id} deletado com sucesso!`);
-        }
+    async deleteDispositivo(id) {
+        exibirConfirmacao({
+            title: 'Deletar Dispositivo',
+            message: 'Tem certeza que deseja deletar este dispositivo? Esta ação não pode ser desfeita.',
+            type: 'danger',
+            confirmText: 'Sim, deletar',
+            cancelText: 'Cancelar',
+            onConfirm: async () => {
+                try {
+                    await callApi(`/device/${id}`, { method: 'DELETE' });
+                    exibirSucesso('Dispositivo deletado com sucesso!');
+                    await this.loadDispositivos(0);
+                } catch (error) {
+                    console.error('Erro ao deletar dispositivo:', error);
+                }
+            }
+        });
     }
 
     loadConsumo() {
@@ -1867,91 +2049,191 @@ class App {
         }
     }
 
-    loadTiposDispositivos() {
-        const content = document.getElementById('page-content');
-        content.innerHTML = `
-            <div class="tipos-dispositivos-page">
-                <div class="card-header">
-                    <h2>Gerenciar Tipos de Dispositivos</h2>
-                    <button class="btn btn-primary" onclick="app.openTipoDispositivoForm()">+ Novo Tipo</button>
-                </div>
+    async loadTiposDispositivos(page = 0, name = '') {
+        try {
+            this.currentSearch = name;
+            const size = 10;
+            
+            const query = new URLSearchParams({
+                name: name || '',
+                page,
+                size
+            }).toString();
+            
+            const response = await callApi(`/device-type?${query}`, { method: 'GET' });
 
-                <div class="table-container">
-                    <div class="table-header">
-                        <h3>Lista de Tipos de Dispositivos</h3>
-                        <div class="table-search">
-                            <input type="text" placeholder="Buscar tipo..." id="searchTipos">
-                        </div>
-                    </div>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Nome</th>
-                                <th>Acoes</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${this.data.tiposDispositivos.length > 0 ? this.data.tiposDispositivos.map(t => `
-                                <tr>
-                                    <td>${t.nome}</td>
-                                        <td>
-                                            <div class="cell-actions">
-                                                <button class="action-btn action-btn-edit" 
-                                                        onclick="app.editSetor('${s.id}')">
-                                                    <i class="fas fa-edit"></i>
-                                                </button>
-                                                <button class="action-btn action-btn-delete" 
-                                                        onclick="app.deleteSetor('${s.id}')">
-                                                    <i class="fas fa-trash-alt"></i>
-                                                </button>
-                                            </div>
-                                        </td>
-                                </tr>
-                            `).join('') : '<tr><td colspan="2" style="text-align: center; padding: 40px;">Nenhum tipo cadastrado</td></tr>'}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        `;
+            // Cria a paginação se ainda não existir
+            if (!this.tiposDispositivosPagination) {
+                this.tiposDispositivosPagination = new Pagination('tipos-dispositivos', size);
+                this.tiposDispositivosPagination.setRemoteLoader((newPage) => {
+                    const searchTerm = document.getElementById('searchTipos')?.value || '';
+                    return this.loadTiposDispositivos(newPage, searchTerm);
+                });
+            }
 
-        document.getElementById('searchTipos')?.addEventListener('keyup', (e) => {
-            const search = e.target.value.toLowerCase();
-            document.querySelectorAll('tbody tr').forEach(row => {
-                const text = row.textContent.toLowerCase();
-                row.style.display = text.includes(search) ? '' : 'none';
-            });
-        });
+            // Atualiza dados da paginação
+            this.tiposDispositivosPagination.updateFromApiResponse(response);
+
+            // Armazena os tipos recebidos
+            this.data = this.data || {};
+            this.data.tiposDispositivos = response.content || [];
+
+            // Renderiza a tabela
+            this.renderTiposDispositivosTable();
+
+        } catch (error) {
+            console.error("Erro ao carregar tipos de dispositivos:", error);
+        }
     }
 
-    openTipoDispositivoForm(tipoId = null) {
+    renderTiposDispositivosTable() {
+        const content = document.getElementById('page-content');
+        const items = this.data?.tiposDispositivos || [];
+
+        // Verifica se é a primeira renderização
+        const isFirstRender = !document.getElementById('searchTipos');
+
+        if (isFirstRender) {
+            // Renderiza tudo pela primeira vez
+            content.innerHTML = `
+                <div class="tipos-dispositivos-page">
+                    <div class="card-header">
+                        <h2>Gerenciar Tipos de Dispositivos</h2>
+                        <button class="btn btn-primary" onclick="app.openTipoDispositivoForm()">+ Novo Tipo</button>
+                    </div>
+
+                    <div class="table-container">
+                        <div class="table-header">
+                            <h3>Lista de Tipos de Dispositivos</h3>
+                            <div class="table-search">
+                                <input type="text" placeholder="Buscar tipo..." id="searchTipos" value="${this.currentSearch || ''}">
+                            </div>
+                        </div>
+
+                        <div class="table-wrapper">
+                            <table id="tiposDispositivosTable">
+                                <thead>
+                                    <tr>
+                                        <th>Nome</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tiposDispositivosTableBody">
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="pagination" id="tiposDispositivosPagination">
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Adiciona o evento de busca apenas na primeira vez
+            const input = document.getElementById('searchTipos');
+            input.oninput = this.debounce(async (e) => {
+                const searchTerm = e.target.value.trim();
+                await this.loadTiposDispositivos(0, searchTerm);
+            }, 400);
+        }
+
+        // Atualiza apenas o tbody
+        const tbody = document.getElementById('tiposDispositivosTableBody');
+        tbody.innerHTML = items.length > 0 ? items.map(t => `
+            <tr>
+                <td>${t.name || '-'}</td>
+                <td>
+                    <div class="cell-actions">
+                        <button class="action-btn action-btn-edit" 
+                                onclick="app.editTipoDispositivo('${t.id}')">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="action-btn action-btn-delete" 
+                                onclick="app.deleteTipoDispositivo('${t.id}')">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `).join('') : `
+            <tr>
+                <td colspan="2" style="text-align: center; padding: 40px; color: #999;">
+                    Nenhum tipo de dispositivo encontrado
+                </td>
+            </tr>
+        `;
+
+        // Atualiza apenas a paginação
+        const paginationDiv = document.getElementById('tiposDispositivosPagination');
+        paginationDiv.innerHTML = this.tiposDispositivosPagination.renderPaginationControls();
+    }
+
+    async openTipoDispositivoForm(tipoId = null) {
         const modal = document.getElementById('formModal');
         const form = document.getElementById('modal-form');
-        const tipo = tipoId ? this.data.tiposDispositivos.find(t => t.id === tipoId) : null;
-        
+        let tipo = null;
+
+        // Se for edição, busca o tipo pelo ID
+        if (tipoId) {
+            try {
+                tipo = await callApi(`/device-type/${tipoId}`, { method: 'GET' });
+            } catch (error) {
+                console.error('Erro ao carregar tipo de dispositivo:', error);
+                return;
+            }
+        }
+
         form.innerHTML = `
             <div class="form-card">
                 <div class="form-card-header">
                     <h2>${tipo ? 'Editar Tipo de Dispositivo' : 'Novo Tipo de Dispositivo'}</h2>
                     <p>${tipo ? 'Atualize os dados do tipo' : 'Preencha os dados do novo tipo'}</p>
                 </div>
-                <form id="tipoForm">
+                <form id="tipoDispositivoForm">
                     <div class="form-group">
                         <label>Nome <span class="required">*</span></label>
-                        <input type="text" name="nome" value="${tipo ? tipo.nome : ''}" required>
+                        <input type="text" name="name" value="${tipo ? tipo.name : ''}">
                     </div>
                     <div class="form-actions">
                         <button type="button" class="btn btn-outline" onclick="document.getElementById('formModal').classList.remove('show')">Cancelar</button>
-                        <button type="submit" class="btn btn-primary">${tipo ? 'Atualizar Tipo' : 'Salvar Tipo'}</button>
+                        <button type="submit" class="btn btn-primary">${tipo ? 'Atualizar' : 'Salvar'}</button>
                     </div>
                 </form>
             </div>
         `;
+
         modal.classList.add('show');
 
-        document.getElementById('tipoForm').addEventListener('submit', (e) => {
+        // Captura o envio do formulário
+        document.getElementById('tipoDispositivoForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            alert(`Tipo de dispositivo ${tipo ? 'atualizado' : 'salvo'} com sucesso!`);
-            modal.classList.remove('show');
+
+            const formData = new FormData(e.target);
+            const payload = Object.fromEntries(formData.entries());
+
+            try {
+                if (tipoId) {
+                    // Atualizar tipo existente (PUT)
+                    await callApi(`/device-type/${tipoId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    exibirSucesso('Tipo atualizado com sucesso!');
+                } else {
+                    // Criar novo tipo (POST)
+                    await callApi(`/device-type`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    exibirSucesso('Tipo criado com sucesso!');
+                }
+
+                modal.classList.remove('show');
+                await this.loadTiposDispositivos(0);
+            } catch (error) {
+                console.error('Erro ao salvar tipo de dispositivo:', error);
+            }
         });
     }
 
@@ -1959,10 +2241,23 @@ class App {
         this.openTipoDispositivoForm(id);
     }
 
-    deleteTipoDispositivo(id) {
-        if (confirm('Tem certeza que deseja deletar este tipo?')) {
-            alert(`Tipo ${id} deletado com sucesso!`);
-        }
+    async deleteTipoDispositivo(id) {
+        exibirConfirmacao({
+            title: 'Deletar Tipo de Dispositivo',
+            message: 'Tem certeza que deseja deletar este tipo de dispositivo? Esta ação não pode ser desfeita.',
+            type: 'danger',
+            confirmText: 'Sim, deletar',
+            cancelText: 'Cancelar',
+            onConfirm: async () => {
+                try {
+                    await callApi(`/device-type/${id}`, { method: 'DELETE' });
+                    exibirSucesso('Tipo de dispositivo deletado com sucesso!');
+                    await this.loadTiposDispositivos(0);
+                } catch (error) {
+                    console.error('Erro ao deletar tipo de dispositivo:', error);
+                }
+            }
+        });
     }
 
     loadVinculos() {
