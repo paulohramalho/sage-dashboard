@@ -22,12 +22,10 @@ class App {
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => {
                 this.setupEventListeners();
-                this.loadMockData();
                 this.loadDashboard();
             });
         } else {
             this.setupEventListeners();
-            this.loadMockData();
             this.loadDashboard();
         }
     }
@@ -107,51 +105,6 @@ class App {
                 this.loadVinculos();
                 break;
         }
-    }
-
-    loadMockData() {
-        // Dados de exemplo
-
-        this.data.tiposDispositivos = [
-            { id: 1, nome: 'Máquina Industrial'},
-            { id: 2, nome: 'Compressor'},
-            { id: 3, nome: 'Ar Condicionado'}
-        ];
-        this.data.usuarios = [
-            { id: 1, nome: 'João Silva', email: 'joao@empresa.com', role: 'Admin'},
-            { id: 2, nome: 'Maria Santos', email: 'maria@empresa.com', role: 'Usuário'},
-            { id: 3, nome: 'Pedro Costa', email: 'pedro@empresa.com', role: 'Usuário'}
-        ];
-
-        this.data.setores = [
-            { id: 1, nome: 'Produção', descricao: 'Setor de produção'},
-            { id: 2, nome: 'Administrativo', descricao: 'Setor administrativo'},
-            { id: 3, nome: 'Almoxarifado', descricao: 'Setor de estoque'}
-        ];
-
-        this.data.salas = [
-            { id: 1, nome: 'Sala 101', descricao: 'Sala de produção', setor: 'Produção'},
-            { id: 2, nome: 'Sala 102', descricao: 'Sala de produção', setor: 'Produção'},
-            { id: 3, nome: 'Sala 201', descricao: 'Sala administrativa', setor: 'Administrativo'}
-        ];
-
-        this.data.dispositivos = [
-            { id: 1, nome: 'Máquina CNC 01', potencia: 5.5, tipo: 'Máquina Industrial'},
-            { id: 2, nome: 'Compressor 01', potencia: 7.5, tipo: 'Compressor'},
-            { id: 3, nome: 'Ar Condicionado 01', potencia: 2.5, tipo: 'Ar Condicionado'}
-        ];
-
-        this.data.consumo = [
-            { id: 1, data: '2024-01-15', hora: '10:30', dispositivo: 'Máquina CNC 01', corrente: 15.5, tensao: 220, potenciaAtiva: 5.5 },
-            { id: 2, data: '2024-01-15', hora: '11:00', dispositivo: 'Compressor 01', corrente: 22.5, tensao: 220, potenciaAtiva: 7.5 },
-            { id: 3, data: '2024-01-15', hora: '11:30', dispositivo: 'Ar Condicionado 01', corrente: 10.2, tensao: 220, potenciaAtiva: 2.5 }
-        ];
-
-        this.data.vinculos = [
-            { id: 1, apelido: 'CNC Sala 101', sala: 'Sala 101', dispositivo: 'Máquina CNC 01', tempoMedio: 8.5 },
-            { id: 2, apelido: 'Compressor Sala 102', sala: 'Sala 102', dispositivo: 'Compressor 01', tempoMedio: 6.0 },
-            { id: 3, apelido: 'AC Sala 201', sala: 'Sala 201', dispositivo: 'Ar Condicionado 01', tempoMedio: 24.0 }
-        ];
     }
 
     loadDashboard() {
