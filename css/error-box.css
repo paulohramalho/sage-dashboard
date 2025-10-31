@@ -1,0 +1,141 @@
+/* error-box.css */
+
+/* Estilo para o container principal da caixa de erro */
+#error-box-container {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 12px;
+    max-width: 420px;
+    pointer-events: none;
+}
+
+/* Estilo para cada mensagem de erro individual */
+.error-message-box {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+    color: #ffffff;
+    border: none;
+    border-radius: 12px;
+    padding: 16px 20px;
+    box-shadow: 0 8px 24px rgba(238, 90, 111, 0.35),
+                0 2px 8px rgba(0, 0, 0, 0.1);
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    transform: translateX(120%) scale(0.9);
+    pointer-events: auto;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    backdrop-filter: blur(10px);
+    position: relative;
+    overflow: hidden;
+    min-width: 320px;
+}
+
+.error-message-box:hover::before {
+    left: 100%;
+}
+
+/* Estilo para mostrar a caixa (após a transição de entrada) */
+.error-message-box.show {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+}
+
+/* Estilo para ocultar a caixa (transição de saída) */
+.error-message-box.hide {
+    opacity: 0;
+    transform: translateX(120%) scale(0.9);
+}
+
+/* Estilo para o botão de fechar */
+.error-message-box .close-button {
+    position: absolute;
+    top: 50%; /* Mudei de 12px para 50% */
+    transform: translateY(-50%); /* Centraliza verticalmente */
+    right: 12px;
+    font-size: 20px;
+    font-weight: 400;
+    line-height: 1;
+    color: rgba(255, 255, 255, 0.9);
+    text-shadow: none;
+    opacity: 0.8;
+    cursor: pointer;
+    background: rgba(0, 0, 0, 0.15);
+    border: none;
+    padding: 4px 8px;
+    margin: 0;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.error-message-box .close-button:hover {
+    opacity: 1;
+    background: rgba(0, 0, 0, 0.25);
+    transform: translateY(-50%) rotate(90deg); /* Mantém a centralização no hover */
+}
+
+.error-message-box .close-button:active {
+    transform: translateY(-50%) rotate(90deg) scale(0.9); /* Mantém a centralização no active */
+}
+
+/* Estilo para o título da mensagem (opcional) */
+.error-message-box strong {
+    margin-right: 6px;
+    font-weight: 600;
+    display: block;
+    margin-bottom: 4px;
+}
+
+/* Barra de progresso de tempo */
+.error-message-box .progress-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.3);
+    width: 100%;
+    transform-origin: left;
+    animation: progress 5s linear forwards;
+}
+
+@keyframes progress {
+    from {
+        transform: scaleX(1);
+    }
+    to {
+        transform: scaleX(0);
+    }
+}
+
+/* Responsividade para telas menores */
+@media (max-width: 480px) {
+    #error-box-container {
+        right: 12px;
+        left: 12px;
+        bottom: 12px;
+        max-width: none;
+    }
+    
+    .error-message-box {
+        min-width: auto;
+        width: 100%;
+    }
+}
+
+/* Modo escuro (opcional) */
+@media (prefers-color-scheme: dark) {
+    .error-message-box {
+        background: linear-gradient(135deg, #d63031 0%, #c0392b 100%);
+        box-shadow: 0 8px 24px rgba(214, 48, 49, 0.4),
+                    0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+}

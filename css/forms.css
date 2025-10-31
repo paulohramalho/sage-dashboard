@@ -1,0 +1,183 @@
+/* ===== FORMULÁRIOS ===== */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: var(--color-text-dark);
+    font-size: 14px;
+}
+
+.form-group label .required {
+    color: var(--color-danger);
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    transition: all 0.3s ease;
+    background-color: var(--color-bg-white);
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(255, 183, 3, 0.1);
+}
+
+.form-group input:disabled,
+.form-group select:disabled,
+.form-group textarea:disabled {
+    background-color: var(--color-bg-light);
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.form-group select {
+    cursor: pointer;
+}
+
+.form-group .help-text {
+    font-size: 12px;
+    color: var(--color-text-light);
+    margin-top: 5px;
+}
+
+.form-group .error-text {
+    font-size: 12px;
+    color: var(--color-danger);
+    margin-top: 5px;
+    display: none;
+}
+
+.form-group.error input,
+.form-group.error select,
+.form-group.error textarea {
+    border-color: var(--color-danger);
+    background-color: rgba(214, 40, 40, 0.05);
+}
+
+.form-group.error .error-text {
+    display: block;
+}
+
+/* ===== FORM ROW ===== */
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.form-row-2 {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+.form-row-3 {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+/* ===== FORM ACTIONS ===== */
+.form-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid var(--color-border-light);
+}
+
+.form-actions .btn {
+    min-width: 120px;
+}
+
+/* ===== CHECKBOX E RADIO ===== */
+.checkbox-group,
+.radio-group {
+    margin-bottom: 20px;
+}
+
+.checkbox-item,
+.radio-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.checkbox-item input[type="checkbox"],
+.radio-item input[type="radio"] {
+    width: 18px;
+    height: 18px;
+    margin-right: 10px;
+    cursor: pointer;
+    accent-color: var(--color-primary);
+}
+
+.checkbox-item label,
+.radio-item label {
+    margin: 0;
+    cursor: pointer;
+    font-weight: normal;
+}
+
+/* ===== FORM CARD ===== */
+.form-card {
+    background-color: var(--color-bg-white);
+    border-radius: 8px;
+    padding: 30px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--color-border-light);
+}
+
+.form-card-header {
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid var(--color-primary);
+}
+
+.form-card-header h2 {
+    margin: 0;
+    color: var(--color-text-dark);
+}
+
+.form-card-header p {
+    margin: 5px 0 0 0;
+    color: var(--color-text-light);
+    font-size: 14px;
+}
+
+/* ===== RESPONSIVIDADE ===== */
+@media (max-width: 768px) {
+    .form-row,
+    .form-row-2,
+    .form-row-3 {
+        grid-template-columns: 1fr;
+    }
+
+    .form-actions {
+        flex-direction: column-reverse;
+    }
+
+    .form-actions .btn {
+        width: 100%;
+    }
+
+    .form-card {
+        padding: 20px;
+    }
+}

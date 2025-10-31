@@ -1,0 +1,331 @@
+/* ===== TABELAS ===== */
+.table-container {
+    background-color: var(--color-bg-white);
+    border-radius: 8px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--color-border-light);
+    overflow: hidden;
+}
+
+.table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid var(--color-border-light);
+    background-color: var(--color-bg-light);
+}
+
+.table-header h3 {
+    margin: 0;
+    color: var(--color-text-dark);
+}
+
+.table-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.table-search {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.table-search input {
+    padding: 8px 12px;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    font-size: 14px;
+    min-width: 250px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+thead {
+    background-color: var(--color-bg-light);
+    border-bottom: 2px solid var(--color-border);
+}
+
+thead th {
+    padding: 15px 20px;
+    text-align: left;
+    font-weight: 600;
+    color: var(--color-text-dark);
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+tbody tr {
+    border-bottom: 1px solid var(--color-border-light);
+    transition: background-color 0.3s ease;
+}
+
+tbody tr:hover {
+    background-color: var(--color-bg-light);
+}
+
+tbody td {
+    padding: 15px 20px;
+    color: var(--color-text-gray);
+    font-size: 14px;
+}
+
+tbody tr:last-child {
+    border-bottom: none;
+}
+
+/* ===== EMPTY STATE ===== */
+.table-empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--color-text-light);
+}
+
+.table-empty-icon {
+    font-size: 48px;
+    margin-bottom: 15px;
+    opacity: 0.5;
+}
+
+.table-empty p {
+    margin: 0;
+    font-size: 16px;
+}
+
+/* ===== CELL ACTIONS ===== */
+.cell-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.action-btn {
+    padding: 6px 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.action-btn-edit {
+    background-color: var(--color-info);
+    color: white;
+}
+
+.action-btn-edit:hover {
+    background-color: #0056a8;
+}
+
+.action-btn-delete {
+    background-color: var(--color-danger);
+    color: white;
+}
+
+.action-btn-delete:hover {
+    background-color: #b91f1f;
+}
+
+.action-btn-view {
+    background-color: var(--color-success);
+    color: white;
+}
+
+.action-btn-view:hover {
+    background-color: #048a5f;
+}
+
+/* ===== BADGE ===== */
+.badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.badge-primary {
+    background-color: rgba(255, 183, 3, 0.2);
+    color: var(--color-primary-dark);
+}
+
+.badge-success {
+    background-color: rgba(6, 168, 125, 0.2);
+    color: #048a5f;
+}
+
+.badge-danger {
+    background-color: rgba(214, 40, 40, 0.2);
+    color: #b91f1f;
+}
+
+.badge-warning {
+    background-color: rgba(255, 149, 0, 0.2);
+    color: #d97706;
+}
+
+.badge-info {
+    background-color: rgba(0, 119, 182, 0.2);
+    color: #0056a8;
+}
+
+/* ===== PAGINAÇÃO ===== */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    padding: 20px;
+    border-top: 1px solid var(--color-border-light);
+    background-color: var(--color-bg-light);
+}
+
+.pagination button,
+.pagination span {
+    padding: 8px 12px;
+    border: 1px solid var(--color-border);
+    background-color: var(--color-bg-white);
+    color: var(--color-text-gray);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.3s ease;
+}
+
+.pagination button:hover {
+    background-color: var(--color-primary);
+    color: white;
+    border-color: var(--color-primary);
+}
+
+.pagination .active {
+    background-color: var(--color-primary);
+    color: white;
+    border-color: var(--color-primary);
+}
+
+.pagination .disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.pagination span {
+    border: none;
+    background: none;
+    cursor: default;
+    padding: 8px 5px;
+}
+
+/* ===== RESPONSIVIDADE ===== */
+@media (max-width: 768px) {
+    .table-header {
+        flex-direction: column;
+        gap: 15px;
+        align-items: flex-start;
+    }
+
+    .table-actions {
+        width: 100%;
+    }
+
+    .table-search {
+        width: 100%;
+    }
+
+    .table-search input {
+        min-width: 100%;
+    }
+
+    table {
+        font-size: 12px;
+    }
+
+    thead th,
+    tbody td {
+        padding: 10px 12px;
+    }
+
+    .cell-actions {
+        flex-direction: column;
+    }
+
+    .action-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* ===== PAGINAÇÃO APRIMORADA ===== */
+.pagination-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-top: 1px solid var(--color-border-light);
+    background-color: var(--color-bg-light);
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.pagination-info {
+    text-align: center;
+    color: var(--color-text-gray);
+    font-size: 14px;
+}
+
+.pagination-controls {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+
+.pagination-btn {
+    padding: 8px 12px;
+    border: 1px solid var(--color-border);
+    background-color: var(--color-bg-white);
+    color: var(--color-text-gray);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.3s ease;
+    min-width: 40px;
+}
+
+.pagination-btn:hover:not(:disabled) {
+    background-color: var(--color-primary);
+    color: white;
+    border-color: var(--color-primary);
+}
+
+.pagination-btn.active {
+    background-color: var(--color-primary);
+    color: white;
+    border-color: var(--color-primary);
+    font-weight: 600;
+}
+
+.pagination-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background-color: var(--color-bg-light);
+}
+
+@media (max-width: 768px) {
+    .pagination-container {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .pagination-controls {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+}
