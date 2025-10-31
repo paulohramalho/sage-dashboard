@@ -77,7 +77,7 @@ async function callApi(endpoint, options = {}) {
                 
                 if (erros.length > 0) {
                     // Pega apenas a primeira mensagem e remove o nome do campo antes do ':'
-                    const primeiroErro = erros[0];
+                    const primeiroErro = erros[erros.length - 1];
                     const indexDoisPontos = primeiroErro.indexOf(':');
                     
                     if (indexDoisPontos !== -1) {
