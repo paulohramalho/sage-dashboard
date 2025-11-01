@@ -150,6 +150,7 @@ tbody tr:last-child {
     border-radius: 20px;
     font-size: 12px;
     font-weight: 600;
+    user-select: none;
 }
 
 .badge-primary {
@@ -175,6 +176,57 @@ tbody tr:last-child {
 .badge-info {
     background-color: rgba(0, 119, 182, 0.2);
     color: #0056a8;
+}
+
+.badge-secondary {
+    background-color: rgba(108, 117, 125, 0.2);
+    color: #495057;
+}
+
+.badge-dark {
+    background-color: rgba(33, 37, 41, 0.2);
+    color: #212529;
+}
+
+.badge-light {
+    background-color: rgba(248, 249, 250, 0.8);
+    color: #495057;
+    border: 1px solid #dee2e6;
+}
+
+.badge-purple {
+    background-color: rgba(111, 66, 193, 0.2);
+    color: #5a32a3;
+}
+
+.badge-pink {
+    background-color: rgba(214, 51, 132, 0.2);
+    color: #a02465;
+}
+
+.badge-indigo {
+    background-color: rgba(102, 16, 242, 0.2);
+    color: #4c0db8;
+}
+
+.badge-teal {
+    background-color: rgba(32, 201, 151, 0.2);
+    color: #198754;
+}
+
+.badge-cyan {
+    background-color: rgba(13, 202, 240, 0.2);
+    color: #087990;
+}
+
+.badge-orange {
+    background-color: rgba(253, 126, 20, 0.2);
+    color: #d66a00;
+}
+
+.badge-gray {
+    background-color: rgba(173, 181, 189, 0.2);
+    color: #6c757d;
 }
 
 /* ===== PAGINAÇÃO ===== */

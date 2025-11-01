@@ -112,7 +112,10 @@ class App {
         }
     }
 
-    loadDashboard() {
+async loadDashboard() {
+        // Usar dados mockados ao invés da API
+        this.dashboardData = this.getMockDashboardData();
+        
         const content = document.getElementById('page-content');
         content.innerHTML = `
             <div class="dashboard-page">
@@ -121,35 +124,36 @@ class App {
                     <div class="stat-card">
                         <div class="stat-card-icon"><i class="fas fa-bolt"></i></div>
                         <div class="stat-card-label">Consumo Total Hoje</div>
-                        <div class="stat-card-value">1,245.5 kWh</div>
-                        <div class="stat-card-change">↑ 5% vs ontem</div>
+                        <div class="stat-card-value">${this.dashboardData.consumoHoje.toLocaleString('pt-BR')} kWh</div>
+                        <div class="stat-card-change">↑ ${this.dashboardData.consumoHojeVariacao}% vs ontem</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-card-icon"><i class="fas fa-users"></i></div>
-                        <div class="stat-card-label">Usuarios Ativos</div>
-                        <div class="stat-card-value">${this.data.usuarios.length}</div>
-                        <div class="stat-card-change">Gerenciadas</div>
+                        <div class="stat-card-icon"><i class="fas fa-calendar-alt"></i></div>
+                        <div class="stat-card-label">Consumo Mensal</div>
+                        <div class="stat-card-value">${this.dashboardData.consumoMensal.toLocaleString('pt-BR')} kWh</div>
+                        <div class="stat-card-change">Até o momento</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-card-icon"><i class="fas fa-plug"></i></div>
                         <div class="stat-card-label">Dispositivos Ativos</div>
-                        <div class="stat-card-value">${this.data.dispositivos.length}</div>
+                        <div class="stat-card-value">${this.dashboardData.dispositivosAtivos}</div>
                         <div class="stat-card-change">Monitorados</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-card-icon"><i class="fas fa-chart-pie"></i></div>
                         <div class="stat-card-label">Custo Estimado</div>
-                        <div class="stat-card-value">R$ 1.245,50</div>
+                        <div class="stat-card-value">R$ ${this.dashboardData.custoEstimado.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
                         <div class="stat-card-change">Mês atual</div>
                     </div>
                 </div>
 
-                <div class="charts-grid-2">
+                <!-- Gráfico de Consumo por Hora (largura total) -->
+                <div class="charts-grid-full">
                     <div class="chart-container">
                         <div class="chart-header">
                             <h3 class="chart-title">Consumo por Hora</h3>
                             <div class="chart-controls">
-                                <select id="chartPeriod1">
+                                <select id="chartPeriodConsumo">
                                     <option>Hoje</option>
                                     <option>Esta Semana</option>
                                     <option>Este Mês</option>
@@ -160,17 +164,44 @@ class App {
                             <canvas id="consumoChart"></canvas>
                         </div>
                     </div>
+                </div>
+
+                <!-- Dois gráficos lado a lado: Top Dispositivos e Setores -->
+                <div class="charts-grid-2">
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <h3 class="chart-title">Top 5 Dispositivos Consumidores</h3>
+                            <div class="chart-controls">
+                                <select id="chartPeriodDispositivos">
+                                    <option>Hoje</option>
+                                    <option>Esta Semana</option>
+                                    <option>Este Mês</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="chart-body">
+                            <canvas id="topDispositivosChart"></canvas>
+                        </div>
+                    </div>
 
                     <div class="chart-container">
                         <div class="chart-header">
-                            <h3 class="chart-title">Consumo por Dispositivo</h3>
+                            <h3 class="chart-title">Consumo por Setor</h3>
+                            <div class="chart-controls">
+                                <select id="chartPeriodSetor">
+                                    <option>Hoje</option>
+                                    <option>Esta Semana</option>
+                                    <option>Este Mês</option>
+                                </select>
+                            </div>
                         </div>
                         <div class="chart-body">
-                            <canvas id="dispositivoChart"></canvas>
+                            <canvas id="setorChart"></canvas>
                         </div>
                     </div>
                 </div>
 
+                <!-- Tabela de Leituras -->
                 <div class="chart-container">
                     <div class="chart-header">
                         <h3 class="chart-title">Últimas Leituras</h3>
@@ -186,7 +217,7 @@ class App {
                             </tr>
                         </thead>
                         <tbody>
-                            ${this.data.consumo.map(c => `
+                            ${this.dashboardData.ultimasLeituras.map(c => `
                                 <tr>
                                     <td>${c.data} ${c.hora}</td>
                                     <td>${c.dispositivo}</td>
@@ -201,147 +232,404 @@ class App {
             </div>
         `;
 
-        // Renderizar gráficos
-        this.renderConsumoChart();
-        this.renderDispositivoChart();
+        // Destruir gráficos anteriores
+        if (this.chartConsumo) {
+            this.chartConsumo.destroy();
+            this.chartConsumo = null;
+        }
+        if (this.chartTopDispositivos) {
+            this.chartTopDispositivos.destroy();
+            this.chartTopDispositivos = null;
+        }
+        if (this.chartSetor) {
+            this.chartSetor.destroy();
+            this.chartSetor = null;
+        }
+
+        // Renderizar gráficos com delay
+        setTimeout(() => {
+            this.renderConsumoChart();
+            this.renderTopDispositivosChart();
+            this.renderSetorChart();
+            
+            // Adicionar eventos aos selects
+            document.getElementById('chartPeriodConsumo')?.addEventListener('change', () => {
+                this.renderConsumoChart();
+            });
+            
+            document.getElementById('chartPeriodDispositivos')?.addEventListener('change', () => {
+                this.renderTopDispositivosChart();
+            });
+            
+            document.getElementById('chartPeriodSetor')?.addEventListener('change', () => {
+                this.renderSetorChart();
+            });
+        }, 100);
+    }
+
+    getMockDashboardData() {
+        return {
+            consumoHoje: 1245.5,
+            consumoHojeVariacao: 5,
+            consumoMensal: 37842,
+            dispositivosAtivos: 8,
+            custoEstimado: 1245.50,
+            
+            consumoPorHora: [
+                { hora: '00:00', consumo: 98.5, media: 85.2, minimo: 72.5, maximo: 105.3 },
+                { hora: '01:00', consumo: 92.3, media: 80.1, minimo: 68.2, maximo: 98.7 },
+                { hora: '02:00', consumo: 88.1, media: 76.5, minimo: 65.1, maximo: 94.2 },
+                { hora: '03:00', consumo: 85.7, media: 74.3, minimo: 63.2, maximo: 91.6 },
+                { hora: '04:00', consumo: 84.2, media: 73.0, minimo: 62.1, maximo: 89.9 },
+                { hora: '05:00', consumo: 86.5, media: 75.0, minimo: 63.8, maximo: 92.5 },
+                { hora: '06:00', consumo: 95.8, media: 83.1, minimo: 70.7, maximo: 102.4 },
+                { hora: '07:00', consumo: 125.4, media: 108.7, minimo: 92.5, maximo: 134.0 },
+                { hora: '08:00', consumo: 168.9, media: 146.4, minimo: 124.6, maximo: 180.5 },
+                { hora: '09:00', consumo: 185.2, media: 160.6, minimo: 136.7, maximo: 197.9 },
+                { hora: '10:00', consumo: 192.5, media: 166.9, minimo: 142.0, maximo: 205.7 },
+                { hora: '11:00', consumo: 188.3, media: 163.2, minimo: 138.9, maximo: 201.2 },
+                { hora: '12:00', consumo: 156.7, media: 135.8, minimo: 115.6, maximo: 167.5 },
+                { hora: '13:00', consumo: 175.2, media: 151.9, minimo: 129.3, maximo: 187.2 },
+                { hora: '14:00', consumo: 194.8, media: 168.9, minimo: 143.6, maximo: 208.1 },
+                { hora: '15:00', consumo: 198.5, media: 172.0, minimo: 146.4, maximo: 212.1 },
+                { hora: '16:00', consumo: 189.7, media: 164.4, minimo: 139.9, maximo: 202.7 },
+                { hora: '17:00', consumo: 172.4, media: 149.4, minimo: 127.1, maximo: 184.2 },
+                { hora: '18:00', consumo: 145.8, media: 126.4, minimo: 107.5, maximo: 155.8 },
+                { hora: '19:00', consumo: 128.5, media: 111.4, minimo: 94.8, maximo: 137.3 },
+                { hora: '20:00', consumo: 118.2, media: 102.5, minimo: 87.2, maximo: 126.3 },
+                { hora: '21:00', consumo: 112.7, media: 97.7, minimo: 83.1, maximo: 120.4 },
+                { hora: '22:00', consumo: 105.3, media: 91.3, minimo: 77.7, maximo: 112.5 },
+                { hora: '23:00', consumo: 101.2, media: 87.7, minimo: 74.6, maximo: 108.2 }
+            ],
+
+            topDispositivos: [
+                { nome: 'Máquina CNC 01', consumo: 1250 },
+                { nome: 'Compressor 02', consumo: 980 },
+                { nome: 'Ar Condicionado 03', consumo: 750 },
+                { nome: 'Forno Industrial', consumo: 620 },
+                { nome: 'Esteira Transportadora', consumo: 480 }
+            ],
+
+            consumoPorSetor: [
+                { setor: 'Produção', consumo: 1250 },
+                { setor: 'Administrativo', consumo: 320 },
+                { setor: 'Logística', consumo: 580 },
+                { setor: 'Manutenção', consumo: 450 },
+                { setor: 'TI', consumo: 180 }
+            ],
+
+            ultimasLeituras: [
+                {
+                    data: '01/11/2025',
+                    hora: '14:35:22',
+                    dispositivo: 'Máquina CNC 01',
+                    corrente: 68.2,
+                    tensao: 220.3,
+                    potenciaAtiva: 15.01
+                },
+                {
+                    data: '01/11/2025',
+                    hora: '14:35:18',
+                    dispositivo: 'Forno Industrial',
+                    corrente: 96.8,
+                    tensao: 219.8,
+                    potenciaAtiva: 21.28
+                },
+                {
+                    data: '01/11/2025',
+                    hora: '14:35:15',
+                    dispositivo: 'Compressor 02',
+                    corrente: 49.3,
+                    tensao: 220.1,
+                    potenciaAtiva: 10.85
+                },
+                {
+                    data: '01/11/2025',
+                    hora: '14:35:12',
+                    dispositivo: 'Ar Condicionado 03',
+                    corrente: 37.4,
+                    tensao: 220.5,
+                    potenciaAtiva: 8.24
+                },
+                {
+                    data: '01/11/2025',
+                    hora: '14:35:08',
+                    dispositivo: 'Esteira Transportadora',
+                    corrente: 24.2,
+                    tensao: 219.9,
+                    potenciaAtiva: 5.32
+                },
+                {
+                    data: '01/11/2025',
+                    hora: '14:35:05',
+                    dispositivo: 'Servidor TI',
+                    corrente: 21.1,
+                    tensao: 220.2,
+                    potenciaAtiva: 4.64
+                },
+                {
+                    data: '01/11/2025',
+                    hora: '14:35:02',
+                    dispositivo: 'Iluminação Galpão',
+                    corrente: 14.1,
+                    tensao: 220.4,
+                    potenciaAtiva: 3.10
+                },
+                {
+                    data: '01/11/2025',
+                    hora: '14:34:58',
+                    dispositivo: 'Máquina CNC 01',
+                    corrente: 67.9,
+                    tensao: 220.1,
+                    potenciaAtiva: 14.94
+                }
+            ]
+        };
     }
 
     renderConsumoChart() {
         const ctx = document.getElementById('consumoChart');
-        if (ctx) {
-            // Gerar dados de consumo por hora (24 horas)
-            const hours = [];
-            const consumoData = [];
-            const avgData = [];
-            const minData = [];
-            const maxData = [];
-            
-            for (let i = 0; i < 24; i++) {
-                hours.push(`${String(i).padStart(2, '0')}:00`);
-                // Simular consumo com variação ao longo do dia
-                const baseConsumo = 150 + Math.sin(i / 24 * Math.PI * 2) * 50 + Math.random() * 30;
-                consumoData.push(baseConsumo.toFixed(2));
-                avgData.push((baseConsumo * 0.85).toFixed(2));
-                minData.push((baseConsumo * 0.7).toFixed(2));
-                maxData.push((baseConsumo * 1.15).toFixed(2));
-            }
-            
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: hours,
-                    datasets: [
-                        {
-                            label: 'Consumo (kWh)',
-                            data: consumoData,
-                            borderColor: '#ffb703',
-                            backgroundColor: 'rgba(255, 183, 3, 0.1)',
-                            borderWidth: 2,
-                            fill: true,
-                            tension: 0.4
-                        },
-                        {
-                            label: 'Média',
-                            data: avgData,
-                            borderColor: '#219ebc',
-                            borderWidth: 1,
-                            borderDash: [5, 5],
-                            fill: false,
-                            tension: 0.4,
-                            pointRadius: 0
-                        },
-                        {
-                            label: 'Mínimo',
-                            data: minData,
-                            borderColor: '#06d6a0',
-                            borderWidth: 1,
-                            borderDash: [2, 2],
-                            fill: false,
-                            tension: 0.4,
-                            pointRadius: 0
-                        },
-                        {
-                            label: 'Máximo',
-                            data: maxData,
-                            borderColor: '#ef476f',
-                            borderWidth: 1,
-                            borderDash: [2, 2],
-                            fill: false,
-                            tension: 0.4,
-                            pointRadius: 0
-                        }
-                    ]
+        if (!ctx) return;
+        
+        // Destruir gráfico anterior
+        if (this.chartConsumo) {
+            this.chartConsumo.destroy();
+        }
+        
+        // Pegar período selecionado
+        const periodo = document.getElementById('chartPeriodConsumo')?.value || 'Hoje';
+        
+        // Usar dados mockados
+        const dados = this.dashboardData.consumoPorHora;
+        const hours = dados.map(d => d.hora);
+        const consumoData = dados.map(d => d.consumo);
+        const avgData = dados.map(d => d.media);
+        const minData = dados.map(d => d.minimo);
+        const maxData = dados.map(d => d.maximo);
+        
+        this.chartConsumo = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: hours,
+                datasets: [
+                    {
+                        label: 'Consumo (kWh)',
+                        data: consumoData,
+                        borderColor: '#ffb703',
+                        backgroundColor: 'rgba(255, 183, 3, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Média',
+                        data: avgData,
+                        borderColor: '#219ebc',
+                        borderWidth: 1,
+                        borderDash: [5, 5],
+                        fill: false,
+                        tension: 0.4,
+                        pointRadius: 0
+                    },
+                    {
+                        label: 'Mínimo',
+                        data: minData,
+                        borderColor: '#06d6a0',
+                        borderWidth: 1,
+                        borderDash: [2, 2],
+                        fill: false,
+                        tension: 0.4,
+                        pointRadius: 0
+                    },
+                    {
+                        label: 'Máximo',
+                        data: maxData,
+                        borderColor: '#ef476f',
+                        borderWidth: 1,
+                        borderDash: [2, 2],
+                        fill: false,
+                        tension: 0.4,
+                        pointRadius: 0
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: {
+                    duration: 1500,
+                    easing: 'easeInOutQuart'
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: {
-                        mode: 'index',
-                        intersect: false
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
                     },
-                    plugins: {
-                        legend: {
-                            display: true,
-                            position: 'top'
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return context.dataset.label + ': ' + context.parsed.y + ' kWh';
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Consumo (kWh)'
-                            }
-                        },
-                        x: {
-                            title: {
-                                display: true,
-                                text: 'Hora do Dia'
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': ' + context.parsed.y + ' kWh';
                             }
                         }
                     }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Consumo (kWh)'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Hora do Dia'
+                        }
+                    }
                 }
-            });
-        }
+            }
+        });
     }
 
-    renderDispositivoChart() {
-        const ctx = document.getElementById('dispositivoChart');
-        if (ctx) {
-            new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Máquina CNC 01', 'Compressor 01', 'Ar Condicionado 01'],
-                    datasets: [{
-                        data: [450, 320, 230],
-                        backgroundColor: [
-                            '#ffb703',
-                            '#fb8500',
-                            '#f77f00'
-                        ],
-                        borderColor: '#ffffff',
-                        borderWidth: 2
-                    }]
+    renderTopDispositivosChart() {
+        const ctx = document.getElementById('topDispositivosChart');
+        if (!ctx) return;
+        
+        // Destruir gráfico anterior
+        if (this.chartTopDispositivos) {
+            this.chartTopDispositivos.destroy();
+        }
+        
+        // Pegar período selecionado
+        const periodo = document.getElementById('chartPeriodDispositivos')?.value || 'Hoje';
+        
+        // Usar dados mockados
+        const dados = this.dashboardData.topDispositivos;
+        const dispositivos = dados.map(d => d.nome);
+        const consumoDispositivos = dados.map(d => d.consumo);
+        
+        this.chartTopDispositivos = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: dispositivos,
+                datasets: [{
+                    data: consumoDispositivos,
+                    backgroundColor: [
+                        '#ef476f',
+                        '#fb8500',
+                        '#ffb703',
+                        '#219ebc',
+                        '#023047'
+                    ],
+                    borderColor: '#ffffff',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: {
+                    duration: 1500,
+                    easing: 'easeInOutQuart'
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: true,
-                            position: 'bottom'
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'bottom',
+                        labels: {
+                            padding: 10,
+                            font: {
+                                size: 11
+                            }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.parsed || 0;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = ((value / total) * 100).toFixed(1);
+                                return `${label}: ${value} kWh (${percentage}%)`;
+                            }
                         }
                     }
                 }
-            });
+            }
+        });
+    }
+
+    renderSetorChart() {
+        const ctx = document.getElementById('setorChart');
+        if (!ctx) return;
+        
+        // Destruir gráfico anterior
+        if (this.chartSetor) {
+            this.chartSetor.destroy();
         }
+        
+        // Pegar período selecionado
+        const periodo = document.getElementById('chartPeriodSetor')?.value || 'Hoje';
+        
+        // Usar dados mockados
+        const dados = this.dashboardData.consumoPorSetor;
+        const setores = dados.map(d => d.setor);
+        const consumoSetores = dados.map(d => d.consumo);
+        
+        this.chartSetor = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: setores,
+                datasets: [{
+                    data: consumoSetores,
+                    backgroundColor: [
+                        '#ffb703',
+                        '#fb8500',
+                        '#f77f00',
+                        '#219ebc',
+                        '#023047'
+                    ],
+                    borderColor: '#ffffff',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: {
+                    duration: 1500,
+                    easing: 'easeInOutQuart'
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'bottom',
+                        labels: {
+                            padding: 10,
+                            font: {
+                                size: 11
+                            }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.parsed || 0;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = ((value / total) * 100).toFixed(1);
+                                return `${label}: ${value} kWh (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
     }
 
     async loadUsuarios() {
@@ -1516,9 +1804,9 @@ class App {
                                 <option value="evolucao-setor">Evolução de Consumo - Setor</option>
                                 <option value="evolucao-sala">Evolução de Consumo - Sala</option>
                                 <option value="evolucao-vinculo">Evolução de Consumo - Vínculo</option>
-                                <option value="rateio-setor">Rateio de Consumo - Setores</option>
-                                <option value="rateio-sala">Rateio de Consumo - Salas</option>
-                                <option value="rateio-vinculo">Rateio de Consumo - Vínculos</option>
+                                <option value="rateio-setor">Comparação de Consumo - Setores</option>
+                                <option value="rateio-sala">Comparação de Consumo - Salas</option>
+                                <option value="rateio-vinculo">Comparação de Consumo - Vínculos</option>
                             </select>
                         </div>
                     </div>
@@ -2218,117 +2506,630 @@ class App {
         });
     }
 
-    loadVinculos() {
-        const content = document.getElementById('page-content');
-        content.innerHTML = `
-            <div class="vinculos-page">
-                <div class="card-header">
-                    <h2>Vinculos de Dispositivos</h2>
-                    <button class="btn btn-primary" onclick="app.openVinculoForm()"><i class="fas fa-plus"></i> Novo Vinculo</button>
-                </div>
 
-                <div class="table-container">
-                    <div class="table-header">
-                        <h3>Lista de Vinculos (Dispositivos em Salas)</h3>
-                        <div class="table-search">
-                            <input type="text" placeholder="Buscar vinculo..." id="searchVinculos">
-                        </div>
-                    </div>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Apelido</th>
-                                <th>Sala</th>
-                                <th>Dispositivo</th>
-                                <th>Tempo Medio (h)</th>
-                                <th>Acoes</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${this.data.vinculos.length > 0 ? this.data.vinculos.map(v => `
-                                <tr>
-                                    <td><strong>${v.apelido}</strong></td>
-                                    <td>${v.sala}</td>
-                                    <td>${v.dispositivo}</td>
-                                    <td>${v.tempoMedio}</td>
-                                        <td>
-                                            <div class="cell-actions">
-                                                <button class="action-btn action-btn-edit" 
-                                                        onclick="app.editSetor('${s.id}')">
-                                                    <i class="fas fa-edit"></i>
-                                                </button>
-                                                <button class="action-btn action-btn-delete" 
-                                                        onclick="app.deleteSetor('${s.id}')">
-                                                    <i class="fas fa-trash-alt"></i>
-                                                </button>
-                                            </div>
-                                        </td>
-                                </tr>
-                            `).join('') : '<tr><td colspan="5" style="text-align: center; padding: 40px;">Nenhum vinculo cadastrado</td></tr>'}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        `;
+    async loadVinculos(page = 0, alias = '', deviceId = '', roomId = '', departmentId = '') {
+        try {
+            this.currentAliasSearch = alias;
+            this.currentDeviceFilter = deviceId;
+            this.currentRoomFilter = roomId;
+            this.currentDepartmentFilterVinculo = departmentId;
+            const size = 10;
+            
+            // Se tem departmentId, usa a rota específica do departamento
+            let response;
+            if (departmentId) {
+                const query = new URLSearchParams({
+                    alias: alias || '',
+                    page,
+                    size
+                }).toString();
+                response = await callApi(`/department/${departmentId}/device?${query}`, { method: 'GET' });
+                
+                // Se tem roomId, filtra os resultados pelo roomId
+                if (roomId && response.content) {
+                    response.content = response.content.filter(v => v.room?.id === roomId);
+                }
+                
+                // Se tem deviceId, filtra os resultados pelo deviceId
+                if (deviceId && response.content) {
+                    response.content = response.content.filter(v => v.device?.id === deviceId);
+                }
+            } else {
+                // Usa a rota geral se não tem departmentId
+                const query = new URLSearchParams({
+                    alias: alias || '',
+                    deviceId: deviceId || '',
+                    roomId: roomId || '',
+                    page,
+                    size
+                }).toString();
+                response = await callApi(`/device-room?${query}`, { method: 'GET' });
+            }
 
-        document.getElementById('searchVinculos')?.addEventListener('keyup', (e) => {
-            const search = e.target.value.toLowerCase();
-            document.querySelectorAll('tbody tr').forEach(row => {
-                const text = row.textContent.toLowerCase();
-                row.style.display = text.includes(search) ? '' : 'none';
-            });
-        });
+            if (!this.vinculosPagination) {
+                this.vinculosPagination = new Pagination('vinculos', size);
+                this.vinculosPagination.setRemoteLoader((newPage) => {
+                    const searchAlias = document.getElementById('searchVinculos')?.value || '';
+                    const devId = $('#filterDevice').val() || '';
+                    const deptId = $('#filterDepartmentVinculo').val() || '';
+                    const rmId = $('#filterRoomVinculo').val() || '';
+                    return this.loadVinculos(newPage, searchAlias, devId, rmId, deptId);
+                });
+            }
+
+            this.vinculosPagination.updateFromApiResponse(response);
+            this.data = this.data || {};
+            this.data.vinculos = response.content || [];
+            this.renderVinculosTable();
+
+        } catch (error) {
+            console.error("Erro ao carregar vínculos:", error);
+        }
     }
 
-    openVinculoForm(vinculoId = null) {
+    async renderVinculosTable() {
+        const content = document.getElementById('page-content');
+        const items = this.data?.vinculos || [];
+        const isFirstRender = !document.getElementById('searchVinculos');
+
+        if (isFirstRender) {
+            let dispositivos = [];
+            let setores = [];
+            
+            try {
+                const [dispositivosResponse, setoresResponse] = await Promise.all([
+                    callApi('/device?name=&page=0&size=1000', { method: 'GET' }),
+                    callApi('/department?name=&page=0&size=1000', { method: 'GET' })
+                ]);
+                dispositivos = dispositivosResponse.content || [];
+                setores = setoresResponse.content || [];
+            } catch (error) {
+                console.error('Erro ao carregar filtros:', error);
+            }
+
+            content.innerHTML = `
+                <div class="vinculos-page">
+                    <div class="card-header">
+                        <h2>Vínculos de Dispositivos</h2>
+                        <button class="btn btn-primary" onclick="app.openVinculoForm()">+ Novo Vínculo</button>
+                    </div>
+
+                    <div class="table-container">
+                        <div class="table-header">
+                            <h3>Lista de Vínculos (Dispositivos em Salas)</h3>
+                            <div class="table-search" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                                <select id="filterDepartmentVinculo" class="select2-search" style="min-width: 200px;">
+                                    <option value="">Todos os setores</option>
+                                    ${setores.map(s => `
+                                        <option value="${s.id}" ${this.currentDepartmentFilterVinculo === s.id ? 'selected' : ''}>
+                                            ${s.name}
+                                        </option>
+                                    `).join('')}
+                                </select>
+                                <select id="filterRoomVinculo" class="select2-search" style="min-width: 200px;" disabled>
+                                    <option value="">Selecione um setor primeiro</option>
+                                </select>
+                                <select id="filterDevice" class="select2-search" style="min-width: 200px;">
+                                    <option value="">Todos os dispositivos</option>
+                                    ${dispositivos.map(d => `
+                                        <option value="${d.id}" ${this.currentDeviceFilter === d.id ? 'selected' : ''}>
+                                            ${d.name} (${d.deviceType?.name || '-'})
+                                        </option>
+                                    `).join('')}
+                                </select>
+                                <input type="text" placeholder="Buscar por apelido..." id="searchVinculos" value="${this.currentAliasSearch || ''}">
+                            </div>
+                        </div>
+
+                        <table id="vinculosTable">
+                            <thead>
+                                <tr>
+                                    <th>Apelido</th>
+                                    <th>Sala</th>
+                                    <th>Setor</th>
+                                    <th>Dispositivo</th>
+                                    <th>Tipo</th>
+                                    <th>Tempo Médio (h)</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="vinculosTableBody">
+                            </tbody>
+                        </table>
+                        <div class="pagination" id="vinculosPagination">
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            $('#filterDepartmentVinculo').select2({
+                placeholder: 'Todos os setores',
+                allowClear: true,
+                language: {
+                    noResults: function() { return "Nenhum setor encontrado"; },
+                    searching: function() { return "Buscando..."; }
+                }
+            });
+
+            $('#filterRoomVinculo').select2({
+                placeholder: 'Selecione um setor primeiro',
+                allowClear: true,
+                language: {
+                    noResults: function() { return "Nenhuma sala encontrada"; },
+                    searching: function() { return "Buscando..."; }
+                }
+            });
+
+            $('#filterDevice').select2({
+                placeholder: 'Todos os dispositivos',
+                allowClear: true,
+                language: {
+                    noResults: function() { return "Nenhum dispositivo encontrado"; },
+                    searching: function() { return "Buscando..."; }
+                }
+            });
+
+            // EVENTO PARA FILTRAR SALAS E DISPOSITIVOS QUANDO SELECIONAR SETOR
+            $('#filterDepartmentVinculo').on('change', async function() {
+                const deptId = $(this).val();
+                const roomSelect = $('#filterRoomVinculo');
+                const deviceSelect = $('#filterDevice');
+                
+                if (deptId) {
+                    try {
+                        // Busca as salas do setor
+                        const salasResponse = await callApi(`/department/${deptId}/room?name=&page=0&size=1000`, { method: 'GET' });
+                        const salasDoSetor = salasResponse.content || [];
+                        
+                        roomSelect.empty();
+                        roomSelect.append('<option value="">Todas as salas do setor</option>');
+                        salasDoSetor.forEach(s => {
+                            roomSelect.append(`<option value="${s.id}">${s.name}</option>`);
+                        });
+                        
+                        roomSelect.prop('disabled', false);
+                        roomSelect.select2('destroy');
+                        roomSelect.select2({
+                            placeholder: 'Todas as salas do setor',
+                            allowClear: true,
+                            language: {
+                                noResults: function() { return "Nenhuma sala encontrada"; },
+                                searching: function() { return "Buscando..."; }
+                            }
+                        });
+
+                        // Busca os dispositivos vinculados ao setor (distinct)
+                        const vinculosResponse = await callApi(`/department/${deptId}/device?name=&page=0&size=1000`, { method: 'GET' });
+                        const vinculos = vinculosResponse.content || [];
+                        
+                        // Extrai dispositivos únicos
+                        const dispositivosUnicos = [];
+                        const dispositivosIds = new Set();
+                        
+                        vinculos.forEach(v => {
+                            if (v.device && !dispositivosIds.has(v.device.id)) {
+                                dispositivosIds.add(v.device.id);
+                                dispositivosUnicos.push(v.device);
+                            }
+                        });
+                        
+                        deviceSelect.empty();
+                        deviceSelect.append('<option value="">Todos os dispositivos do setor</option>');
+                        dispositivosUnicos.forEach(d => {
+                            deviceSelect.append(`<option value="${d.id}">${d.name} (${d.deviceType?.name || '-'})</option>`);
+                        });
+                        
+                        deviceSelect.select2('destroy');
+                        deviceSelect.select2({
+                            placeholder: 'Todos os dispositivos do setor',
+                            allowClear: true,
+                            language: {
+                                noResults: function() { return "Nenhum dispositivo encontrado"; },
+                                searching: function() { return "Buscando..."; }
+                            }
+                        });
+                        
+                    } catch (error) {
+                        console.error('Erro ao carregar dados do setor:', error);
+                    }
+                } else {
+                    // Reset salas
+                    roomSelect.empty();
+                    roomSelect.append('<option value="">Selecione um setor primeiro</option>');
+                    roomSelect.prop('disabled', true);
+                    roomSelect.val('').trigger('change');
+                    roomSelect.select2('destroy');
+                    roomSelect.select2({
+                        placeholder: 'Selecione um setor primeiro',
+                        allowClear: true
+                    });
+
+                    // Reset dispositivos para todos
+                    try {
+                        const dispositivosResponse = await callApi('/device?name=&page=0&size=1000', { method: 'GET' });
+                        const todosDispositivos = dispositivosResponse.content || [];
+                        
+                        deviceSelect.empty();
+                        deviceSelect.append('<option value="">Todos os dispositivos</option>');
+                        todosDispositivos.forEach(d => {
+                            deviceSelect.append(`<option value="${d.id}">${d.name} (${d.deviceType?.name || '-'})</option>`);
+                        });
+                        
+                        deviceSelect.select2('destroy');
+                        deviceSelect.select2({
+                            placeholder: 'Todos os dispositivos',
+                            allowClear: true,
+                            language: {
+                                noResults: function() { return "Nenhum dispositivo encontrado"; },
+                                searching: function() { return "Buscando..."; }
+                            }
+                        });
+                    } catch (error) {
+                        console.error('Erro ao carregar dispositivos:', error);
+                    }
+                }
+                
+                // Recarregar dados
+                const searchAlias = document.getElementById('searchVinculos')?.value || '';
+                const devId = $('#filterDevice').val() || '';
+                const rmId = $('#filterRoomVinculo').val() || '';
+                await app.loadVinculos(0, searchAlias, devId, rmId, deptId);
+            });
+
+            // EVENTO PARA FILTRAR DISPOSITIVOS QUANDO SELECIONAR SALA
+            $('#filterRoomVinculo').on('change', async (e) => {
+                const rmId = e.target.value;
+                const deptId = $('#filterDepartmentVinculo').val() || '';
+                const deviceSelect = $('#filterDevice');
+                
+                if (rmId) {
+                    try {
+                        // Busca os dispositivos vinculados à sala
+                        const vinculosResponse = await callApi(`/room/${rmId}/device?name=&page=0&size=1000`, { method: 'GET' });
+                        const vinculos = vinculosResponse.content || [];
+                        
+                        // Extrai dispositivos únicos
+                        const dispositivosUnicos = [];
+                        const dispositivosIds = new Set();
+                        
+                        vinculos.forEach(v => {
+                            if (v.device && !dispositivosIds.has(v.device.id)) {
+                                dispositivosIds.add(v.device.id);
+                                dispositivosUnicos.push(v.device);
+                            }
+                        });
+                        
+                        deviceSelect.empty();
+                        deviceSelect.append('<option value="">Todos os dispositivos da sala</option>');
+                        dispositivosUnicos.forEach(d => {
+                            deviceSelect.append(`<option value="${d.id}">${d.name} (${d.deviceType?.name || '-'})</option>`);
+                        });
+                        
+                        deviceSelect.select2('destroy');
+                        deviceSelect.select2({
+                            placeholder: 'Todos os dispositivos da sala',
+                            allowClear: true,
+                            language: {
+                                noResults: function() { return "Nenhum dispositivo encontrado"; },
+                                searching: function() { return "Buscando..."; }
+                            }
+                        });
+                    } catch (error) {
+                        console.error('Erro ao carregar dispositivos da sala:', error);
+                    }
+                } else if (deptId) {
+                    // Se limpou a sala mas tem setor, volta para dispositivos do setor
+                    try {
+                        const vinculosResponse = await callApi(`/department/${deptId}/device?name=&page=0&size=1000`, { method: 'GET' });
+                        const vinculos = vinculosResponse.content || [];
+                        
+                        const dispositivosUnicos = [];
+                        const dispositivosIds = new Set();
+                        
+                        vinculos.forEach(v => {
+                            if (v.device && !dispositivosIds.has(v.device.id)) {
+                                dispositivosIds.add(v.device.id);
+                                dispositivosUnicos.push(v.device);
+                            }
+                        });
+                        
+                        deviceSelect.empty();
+                        deviceSelect.append('<option value="">Todos os dispositivos do setor</option>');
+                        dispositivosUnicos.forEach(d => {
+                            deviceSelect.append(`<option value="${d.id}">${d.name} (${d.deviceType?.name || '-'})</option>`);
+                        });
+                        
+                        deviceSelect.select2('destroy');
+                        deviceSelect.select2({
+                            placeholder: 'Todos os dispositivos do setor',
+                            allowClear: true,
+                            language: {
+                                noResults: function() { return "Nenhum dispositivo encontrado"; },
+                                searching: function() { return "Buscando..."; }
+                            }
+                        });
+                    } catch (error) {
+                        console.error('Erro ao carregar dispositivos do setor:', error);
+                    }
+                }
+                
+                const searchAlias = document.getElementById('searchVinculos')?.value || '';
+                const devId = $('#filterDevice').val() || '';
+                await app.loadVinculos(0, searchAlias, devId, rmId, deptId);
+            });
+
+            const input = document.getElementById('searchVinculos');
+            input.oninput = this.debounce(async (e) => {
+                const searchAlias = e.target.value.trim();
+                const devId = $('#filterDevice').val() || '';
+                const deptId = $('#filterDepartmentVinculo').val() || '';
+                const rmId = $('#filterRoomVinculo').val() || '';
+                await this.loadVinculos(0, searchAlias, devId, rmId, deptId);
+            }, 400);
+
+            $('#filterDevice').on('change', async (e) => {
+                const devId = e.target.value;
+                const searchAlias = document.getElementById('searchVinculos')?.value || '';
+                const deptId = $('#filterDepartmentVinculo').val() || '';
+                const rmId = $('#filterRoomVinculo').val() || '';
+                await this.loadVinculos(0, searchAlias, devId, rmId, deptId);
+            });
+        }
+
+        const tbody = document.getElementById('vinculosTableBody');
+        tbody.innerHTML = items.length > 0 ? items.map(v => `
+            <tr>
+                <td><strong>${v.alias || '-'}</strong></td>
+                <td><span class="badge badge-indigo">${v.room?.name || '-'}</span></td>
+                <td><span class="badge badge-info">${v.room?.department?.name || '-'}</span></td>
+                <td><span class="badge badge-purple">${v.device?.name || '-'}</span></td>
+                <td><span class="badge badge-secondary">${v.device?.deviceType?.name || '-'}</span></td>
+                <td>${v.averageTimeHour ? v.averageTimeHour.toFixed(1) : '-'}</td>
+                <td>
+                ${v.online 
+                    ? '<span class="badge badge-success">Online</span>' 
+                    : '<span class="badge badge-danger">Offline</span>'}
+                </td>
+                <td>
+                    <div class="cell-actions">
+                        <button class="action-btn action-btn-edit" onclick="app.editVinculo('${v.id}')">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="action-btn action-btn-delete" onclick="app.deleteVinculo('${v.id}')">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `).join('') : `
+            <tr>
+                <td colspan="8" style="text-align: center; padding: 40px; color: #999;">
+                    Nenhum vínculo encontrado
+                </td>
+            </tr>
+        `;
+
+        const paginationDiv = document.getElementById('vinculosPagination');
+        paginationDiv.innerHTML = this.vinculosPagination.renderPaginationControls();
+    }
+
+    async openVinculoForm(vinculoId = null) {
         const modal = document.getElementById('formModal');
         const form = document.getElementById('modal-form');
-        const vinculo = vinculoId ? this.data.vinculos.find(v => v.id === vinculoId) : null;
+        let vinculo = null;
+
+        // Carrega dados apenas se for novo vínculo
+        let dispositivos = [];
+        let setores = [];
+        
+        if (!vinculoId) {
+            try {
+                const [dispositivosResponse, setoresResponse] = await Promise.all([
+                    callApi('/device?name=&page=0&size=1000', { method: 'GET' }),
+                    callApi('/department?name=&page=0&size=1000', { method: 'GET' })
+                ]);
+                dispositivos = dispositivosResponse.content || [];
+                setores = setoresResponse.content || [];
+            } catch (error) {
+                console.error('Erro ao carregar dados para formulário:', error);
+            }
+        } else {
+            // Se está editando, carrega o vínculo
+            try {
+                vinculo = await callApi(`/device-room/${vinculoId}`, { method: 'GET' });
+            } catch (error) {
+                console.error('Erro ao carregar vínculo:', error);
+                return;
+            }
+        }
 
         form.innerHTML = `
             <div class="form-card">
                 <div class="form-card-header">
-                    <h2>${vinculo ? 'Editar Vínculo' : 'Novo Vínculo de Dispositivo'}</h2>
+                    <h2>${vinculo ? 'Editar Vínculo' : 'Novo Vínculo'}</h2>
                     <p>${vinculo ? 'Atualize os dados do vínculo' : 'Vincule um dispositivo a uma sala'}</p>
                 </div>
                 <form id="vinculoForm">
                     <div class="form-group">
                         <label>Apelido <span class="required">*</span></label>
-                        <input type="text" name="apelido" value="${vinculo ? vinculo.apelido : ''}" required>
+                        <input type="text" name="alias" value="${vinculo ? vinculo.alias : ''}" placeholder="Ex: Ar Sala Reunião" required>
                     </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Sala <span class="required">*</span></label>
-                            <select name="fk_sala" required>
-                                <option value="">Selecione uma sala</option>
-                                ${this.data.salas.map(s => `<option value="${s.id}" ${vinculo && vinculo.sala === s.nome ? 'selected' : ''}>${s.nome}</option>`).join('')}
+                    
+                    <div class="form-group">
+                        <label>Setor <span class="required">*</span></label>
+                        ${vinculo ? `
+                            <input type="text" value="${vinculo.room?.department?.name || '-'}" disabled>
+                            <small style="color: #666; font-size: 12px; margin-top: 5px; display: block;">O setor não pode ser alterado</small>
+                        ` : `
+                            <select id="formDepartmentSelect" class="select2-search" required>
+                                <option value="">Selecione um setor</option>
+                                ${setores.map(s => `
+                                    <option value="${s.id}">
+                                        ${s.name}
+                                    </option>
+                                `).join('')}
                             </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Dispositivo <span class="required">*</span></label>
-                            <select name="fk_dispositivo" required>
+                        `}
+                    </div>
+
+                    <div class="form-group">
+                        <label>Sala <span class="required">*</span></label>
+                        ${vinculo ? `
+                            <input type="text" value="${vinculo.room?.name || '-'}" disabled>
+                            <small style="color: #666; font-size: 12px; margin-top: 5px; display: block;">A sala não pode ser alterada</small>
+                        ` : `
+                            <select name="roomId" id="formRoomSelect" class="select2-search" disabled required>
+                                <option value="">Selecione um setor primeiro</option>
+                            </select>
+                        `}
+                    </div>
+
+                    <div class="form-group">
+                        <label>Dispositivo <span class="required">*</span></label>
+                        ${vinculo ? `
+                            <input type="text" value="${vinculo.device?.name || '-'} (${vinculo.device?.deviceType?.name || '-'}) - ${vinculo.device?.power}W" disabled>
+                            <small style="color: #666; font-size: 12px; margin-top: 5px; display: block;">O dispositivo não pode ser alterado</small>
+                        ` : `
+                            <select name="deviceId" id="formDeviceSelect" class="select2-search" required>
                                 <option value="">Selecione um dispositivo</option>
-                                ${this.data.dispositivos.map(d => `<option value="${d.id}" ${vinculo && vinculo.dispositivo === d.nome ? 'selected' : ''}>${d.nome}</option>`).join('')}
+                                ${dispositivos.map(d => `
+                                    <option value="${d.id}">
+                                        ${d.name} (${d.deviceType?.name || '-'}) - ${d.power}W
+                                    </option>
+                                `).join('')}
                             </select>
-                        </div>
+                        `}
                     </div>
+
                     <div class="form-group">
                         <label>Tempo Médio de Funcionamento (horas)</label>
-                        <input type="number" name="tempo_medio_hora" step="0.1" value="${vinculo ? vinculo.tempoMedio : ''}">
+                        <input type="number" name="averageTimeHour" step="0.1" min="0" value="${vinculo ? vinculo.averageTimeHour || '' : ''}" placeholder="Ex: 8.5">
+                        <small style="color: #666; font-size: 12px; margin-top: 5px; display: block;">Tempo médio de uso diário em horas</small>
                     </div>
+                    
                     <div class="form-actions">
                         <button type="button" class="btn btn-outline" onclick="document.getElementById('formModal').classList.remove('show')">Cancelar</button>
-                        <button type="submit" class="btn btn-primary">${vinculo ? 'Atualizar Vínculo' : 'Criar Vínculo'}</button>
+                        <button type="submit" class="btn btn-primary">${vinculo ? 'Atualizar' : 'Salvar'}</button>
                     </div>
                 </form>
             </div>
         `;
+
         modal.classList.add('show');
 
-        document.getElementById('vinculoForm').addEventListener('submit', (e) => {
+        // Inicializa select2 apenas para novos vínculos
+        if (!vinculo) {
+            $('#formDepartmentSelect').select2({
+                placeholder: 'Selecione um setor',
+                dropdownParent: $('#formModal'),
+                allowClear: true,
+                width: '100%',
+                language: {
+                    noResults: function() { return "Nenhum setor encontrado"; },
+                    searching: function() { return "Buscando..."; }
+                }
+            });
+
+            $('#formRoomSelect').select2({
+                placeholder: 'Selecione um setor primeiro',
+                dropdownParent: $('#formModal'),
+                width: '100%',
+                language: {
+                    noResults: function() { return "Nenhuma sala encontrada"; },
+                    searching: function() { return "Buscando..."; }
+                }
+            });
+
+            $('#formDeviceSelect').select2({
+                placeholder: 'Selecione um dispositivo',
+                dropdownParent: $('#formModal'),
+                width: '100%',
+                language: {
+                    noResults: function() { return "Nenhum dispositivo encontrado"; },
+                    searching: function() { return "Buscando..."; }
+                }
+            });
+
+            // EVENTO PARA FILTRAR SALAS QUANDO SELECIONAR SETOR (mesma lógica da visualização)
+            $('#formDepartmentSelect').on('change', async function() {
+                const setorId = $(this).val();
+                const roomSelect = $('#formRoomSelect');
+                
+                if (setorId) {
+                    try {
+                        // Busca as salas do setor
+                        const salasResponse = await callApi(`/department/${setorId}/room?name=&page=0&size=1000`, { method: 'GET' });
+                        const salasDoSetor = salasResponse.content || [];
+                        
+                        roomSelect.empty();
+                        roomSelect.append('<option value="">Selecione uma sala</option>');
+                        salasDoSetor.forEach(s => {
+                            roomSelect.append(`<option value="${s.id}">${s.name}</option>`);
+                        });
+                        
+                        roomSelect.prop('disabled', false);
+                        roomSelect.select2('destroy');
+                        roomSelect.select2({
+                            placeholder: 'Selecione uma sala',
+                            dropdownParent: $('#formModal'),
+                            language: {
+                                noResults: function() { return "Nenhuma sala encontrada"; },
+                                searching: function() { return "Buscando..."; }
+                            }
+                        });
+                    } catch (error) {
+                        console.error('Erro ao carregar salas do setor:', error);
+                    }
+                } else {
+                    roomSelect.empty();
+                    roomSelect.append('<option value="">Selecione um setor primeiro</option>');
+                    roomSelect.prop('disabled', true);
+                    roomSelect.select2('destroy');
+                    roomSelect.select2({
+                        placeholder: 'Selecione um setor primeiro',
+                        dropdownParent: $('#formModal')
+                    });
+                }
+            });
+        }
+
+        document.getElementById('vinculoForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            alert(`Vinculo ${vinculo ? 'atualizado' : 'criado'} com sucesso!`);
-            modal.classList.remove('show');
+
+            const formData = new FormData(e.target);
+            const payload = Object.fromEntries(formData.entries());
+
+            if (payload.averageTimeHour) {
+                payload.averageTimeHour = parseFloat(payload.averageTimeHour);
+            }
+
+            try {
+                if (vinculoId) {
+                    const updatePayload = {
+                        alias: payload.alias,
+                        averageTimeHour: payload.averageTimeHour || null
+                    };
+                    await callApi(`/device-room/${vinculoId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(updatePayload)
+                    });
+                    exibirSucesso('Vínculo atualizado com sucesso!');
+                } else {
+                    await callApi(`/device-room`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    exibirSucesso('Vínculo criado com sucesso!');
+                }
+
+                modal.classList.remove('show');
+                await this.loadVinculos(0);
+            } catch (error) {
+                console.error('Erro ao salvar vínculo:', error);
+            }
         });
     }
 
@@ -2336,12 +3137,25 @@ class App {
         this.openVinculoForm(id);
     }
 
-    deleteVinculo(id) {
-        if (confirm('Tem certeza que deseja deletar este vinculo?')) {
-            alert(`Vinculo ${id} deletado com sucesso!`);
-        }
+    async deleteVinculo(id) {
+        exibirConfirmacao({
+            title: 'Deletar Vínculo',
+            message: 'Tem certeza que deseja deletar este vínculo? Esta ação não pode ser desfeita.',
+            type: 'danger',
+            confirmText: 'Sim, deletar',
+            cancelText: 'Cancelar',
+            onConfirm: async () => {
+                try {
+                    await callApi(`/device-room/${id}`, { method: 'DELETE' });
+                    exibirSucesso('Vínculo deletado com sucesso!');
+                    await this.loadVinculos(0);
+                } catch (error) {
+                    console.error('Erro ao deletar vínculo:', error);
+                }
+            }
+        });
     }
-}
+    }
 
 // Inicializar aplicacao
 const app = new App();
@@ -2366,10 +3180,10 @@ App.prototype.loadRelatorios = function() {
                                 <option value="evolucao-sala">Evolução - Por Sala</option>
                                 <option value="evolucao-dispositivo">Evolução - Por Dispositivo (Vínculo)</option>
                             </optgroup>
-                            <optgroup label="Rateio de Consumo">
-                                <option value="rateio-setor">Rateio - Por Setor</option>
-                                <option value="rateio-sala">Rateio - Por Sala</option>
-                                <option value="rateio-dispositivo">Rateio - Por Dispositivo (Vínculo)</option>
+                            <optgroup label="Comparação de Consumo">
+                                <option value="rateio-setor">Comparação - Por Setor</option>
+                                <option value="rateio-sala">Comparação - Por Sala</option>
+                                <option value="rateio-dispositivo">Comparação - Por Dispositivo (Vínculo)</option>
                             </optgroup>
                         </select>
                     </div>
