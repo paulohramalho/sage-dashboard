@@ -43,7 +43,7 @@ class App {
         // Modal
         const modal = document.getElementById('formModal');
         const closeBtn = document.querySelector('.close');
-        
+
         if (closeBtn) {
             closeBtn.addEventListener('click', () => {
                 modal.classList.remove('show');
@@ -72,7 +72,7 @@ class App {
 
     navigateTo(page) {
         this.currentPage = page;
-        
+
         // Atualizar link ativo
         document.querySelectorAll('.nav-link').forEach(link => {
             link.classList.remove('active');
@@ -80,7 +80,7 @@ class App {
         document.querySelector(`[data-page="${page}"]`)?.classList.add('active');
 
         // Carregar página
-        switch(page) {
+        switch (page) {
             case 'dashboard':
                 this.loadDashboard();
                 break;
@@ -112,10 +112,10 @@ class App {
         }
     }
 
-async loadDashboard() {
+    async loadDashboard() {
         // Usar dados mockados ao invés da API
         this.dashboardData = this.getMockDashboardData();
-        
+
         const content = document.getElementById('page-content');
         content.innerHTML = `
             <div class="dashboard-page">
@@ -142,7 +142,7 @@ async loadDashboard() {
                     <div class="stat-card">
                         <div class="stat-card-icon"><i class="fas fa-chart-pie"></i></div>
                         <div class="stat-card-label">Custo Estimado</div>
-                        <div class="stat-card-value">R$ ${this.dashboardData.custoEstimado.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
+                        <div class="stat-card-value">R$ ${this.dashboardData.custoEstimado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
                         <div class="stat-card-change">Mês atual</div>
                     </div>
                 </div>
@@ -251,16 +251,16 @@ async loadDashboard() {
             this.renderConsumoChart();
             this.renderTopDispositivosChart();
             this.renderSetorChart();
-            
+
             // Adicionar eventos aos selects
             document.getElementById('chartPeriodConsumo')?.addEventListener('change', () => {
                 this.renderConsumoChart();
             });
-            
+
             document.getElementById('chartPeriodDispositivos')?.addEventListener('change', () => {
                 this.renderTopDispositivosChart();
             });
-            
+
             document.getElementById('chartPeriodSetor')?.addEventListener('change', () => {
                 this.renderSetorChart();
             });
@@ -274,7 +274,7 @@ async loadDashboard() {
             consumoMensal: 37842,
             dispositivosAtivos: 8,
             custoEstimado: 1245.50,
-            
+
             consumoPorHora: [
                 { hora: '00:00', consumo: 98.5, media: 85.2, minimo: 72.5, maximo: 105.3 },
                 { hora: '01:00', consumo: 92.3, media: 80.1, minimo: 68.2, maximo: 98.7 },
@@ -390,15 +390,15 @@ async loadDashboard() {
     renderConsumoChart() {
         const ctx = document.getElementById('consumoChart');
         if (!ctx) return;
-        
+
         // Destruir gráfico anterior
         if (this.chartConsumo) {
             this.chartConsumo.destroy();
         }
-        
+
         // Pegar período selecionado
         const periodo = document.getElementById('chartPeriodConsumo')?.value || 'Hoje';
-        
+
         // Usar dados mockados
         const dados = this.dashboardData.consumoPorHora;
         const hours = dados.map(d => d.hora);
@@ -406,7 +406,7 @@ async loadDashboard() {
         const avgData = dados.map(d => d.media);
         const minData = dados.map(d => d.minimo);
         const maxData = dados.map(d => d.maximo);
-        
+
         this.chartConsumo = new Chart(ctx, {
             type: 'line',
             data: {
@@ -471,7 +471,7 @@ async loadDashboard() {
                     },
                     tooltip: {
                         callbacks: {
-                            label: function(context) {
+                            label: function (context) {
                                 return context.dataset.label + ': ' + context.parsed.y + ' kWh';
                             }
                         }
@@ -499,20 +499,20 @@ async loadDashboard() {
     renderTopDispositivosChart() {
         const ctx = document.getElementById('topDispositivosChart');
         if (!ctx) return;
-        
+
         // Destruir gráfico anterior
         if (this.chartTopDispositivos) {
             this.chartTopDispositivos.destroy();
         }
-        
+
         // Pegar período selecionado
         const periodo = document.getElementById('chartPeriodDispositivos')?.value || 'Hoje';
-        
+
         // Usar dados mockados
         const dados = this.dashboardData.topDispositivos;
         const dispositivos = dados.map(d => d.nome);
         const consumoDispositivos = dados.map(d => d.consumo);
-        
+
         this.chartTopDispositivos = new Chart(ctx, {
             type: 'doughnut',
             data: {
@@ -550,7 +550,7 @@ async loadDashboard() {
                     },
                     tooltip: {
                         callbacks: {
-                            label: function(context) {
+                            label: function (context) {
                                 const label = context.label || '';
                                 const value = context.parsed || 0;
                                 const total = context.dataset.data.reduce((a, b) => a + b, 0);
@@ -567,20 +567,20 @@ async loadDashboard() {
     renderSetorChart() {
         const ctx = document.getElementById('setorChart');
         if (!ctx) return;
-        
+
         // Destruir gráfico anterior
         if (this.chartSetor) {
             this.chartSetor.destroy();
         }
-        
+
         // Pegar período selecionado
         const periodo = document.getElementById('chartPeriodSetor')?.value || 'Hoje';
-        
+
         // Usar dados mockados
         const dados = this.dashboardData.consumoPorSetor;
         const setores = dados.map(d => d.setor);
         const consumoSetores = dados.map(d => d.consumo);
-        
+
         this.chartSetor = new Chart(ctx, {
             type: 'doughnut',
             data: {
@@ -618,7 +618,7 @@ async loadDashboard() {
                     },
                     tooltip: {
                         callbacks: {
-                            label: function(context) {
+                            label: function (context) {
                                 const label = context.label || '';
                                 const value = context.parsed || 0;
                                 const total = context.dataset.data.reduce((a, b) => a + b, 0);
@@ -634,7 +634,7 @@ async loadDashboard() {
 
     async loadUsuarios() {
         const content = document.getElementById('page-content');
-        
+
         // Tenta carregar dados da API
         try {
             // Assumindo que o endpoint para usuários é '/usuarios'
@@ -710,7 +710,7 @@ async loadDashboard() {
         const modal = document.getElementById('formModal');
         const form = document.getElementById('modal-form');
         const usuario = usuarioId ? this.data.usuarios.find(u => u.id === usuarioId) : null;
-        
+
         form.innerHTML = `
             <div class="form-card">
                 <div class="form-card-header">
@@ -783,13 +783,13 @@ async loadDashboard() {
         try {
             this.currentSearch = name;
             const size = 10;
-            
+
             const query = new URLSearchParams({
                 name: name || '',
                 page,
                 size
             }).toString();
-            
+
             const response = await callApi(`/department?${query}`, { method: 'GET' });
 
             // Cria a paginação se ainda não existir
@@ -999,9 +999,9 @@ async loadDashboard() {
             this.currentSearch = name;
             this.currentDepartmentFilter = departmentId;
             const size = 10;
-            
+
             let response;
-            
+
             if (departmentId) {
                 const query = new URLSearchParams({
                     name: name || '',
@@ -1104,10 +1104,10 @@ async loadDashboard() {
                 placeholder: 'Todos os setores',
                 allowClear: true,
                 language: {
-                    noResults: function() {
+                    noResults: function () {
                         return "Nenhum setor encontrado";
                     },
-                    searching: function() {
+                    searching: function () {
                         return "Buscando...";
                     }
                 }
@@ -1227,10 +1227,10 @@ async loadDashboard() {
                 placeholder: 'Selecione um setor',
                 dropdownParent: $('#formModal'),
                 language: {
-                    noResults: function() {
+                    noResults: function () {
                         return "Nenhum setor encontrado";
                     },
-                    searching: function() {
+                    searching: function () {
                         return "Buscando...";
                     }
                 }
@@ -1303,9 +1303,9 @@ async loadDashboard() {
             this.currentSearch = name;
             this.currentDeviceTypeFilter = deviceTypeId;
             const size = 10;
-            
+
             let response;
-            
+
             // Se tem filtro de tipo de dispositivo, usa o endpoint específico
             if (deviceTypeId) {
                 const query = new URLSearchParams({
@@ -1413,10 +1413,10 @@ async loadDashboard() {
                 placeholder: 'Todos os tipos',
                 allowClear: true,
                 language: {
-                    noResults: function() {
+                    noResults: function () {
                         return "Nenhum tipo encontrado";
                     },
-                    searching: function() {
+                    searching: function () {
                         return "Buscando...";
                     }
                 }
@@ -1536,10 +1536,10 @@ async loadDashboard() {
                 placeholder: 'Selecione um tipo',
                 dropdownParent: $('#formModal'),
                 language: {
-                    noResults: function() {
+                    noResults: function () {
                         return "Nenhum tipo encontrado";
                     },
-                    searching: function() {
+                    searching: function () {
                         return "Buscando...";
                     }
                 }
@@ -1830,7 +1830,6 @@ async loadDashboard() {
                         </div>
                     </div>
                     <div class="filter-row" style="margin-top: 15px;">
-                        <div class="filter-group">
                             <label>Período Personalizado</label>
                             <div style="display: flex; gap: 10px; align-items: center;">
                                 <input type="date" id="dataInicio" class="form-control" style="flex: 1;">
@@ -1870,39 +1869,39 @@ async loadDashboard() {
 
     setPeriodo(periodo) {
         this.periodoAtual = periodo;
-        
+
         // Atualizar botões ativos
         document.querySelectorAll('.btn-group .btn').forEach(btn => btn.classList.remove('active'));
         event.target.classList.add('active');
-        
+
         // Limpar datas personalizadas
         document.getElementById('dataInicio').value = '';
         document.getElementById('dataFim').value = '';
-        
+
         this.renderRelatorioChart();
     }
 
     aplicarPeriodoPersonalizado() {
         const dataInicio = document.getElementById('dataInicio').value;
         const dataFim = document.getElementById('dataFim').value;
-        
+
         if (!dataInicio || !dataFim) {
             alert('Por favor, selecione ambas as datas');
             return;
         }
-        
+
         if (new Date(dataInicio) > new Date(dataFim)) {
             alert('A data inicial deve ser anterior à data final');
             return;
         }
-        
+
         this.periodoAtual = 'personalizado';
         this.dataInicioCustom = dataInicio;
         this.dataFimCustom = dataFim;
-        
+
         // Remover active de todos os botões
         document.querySelectorAll('.btn-group .btn').forEach(btn => btn.classList.remove('active'));
-        
+
         this.renderRelatorioChart();
     }
 
@@ -1925,7 +1924,7 @@ async loadDashboard() {
 
         // Gerar dados baseado no tipo e período
         const dadosGrafico = this.gerarDadosRelatorio(tipo, periodo);
-        
+
         // Atualizar título
         document.getElementById('chartTitle').textContent = dadosGrafico.titulo;
 
@@ -1937,14 +1936,14 @@ async loadDashboard() {
         };
 
         this.currentChart = new Chart(canvas, config);
-        
+
         // Atualizar tabela de dados
         this.renderTabelaDados(dadosGrafico.tabelaDados);
     }
 
     gerarDadosRelatorio(tipo, periodo) {
         const periodoTexto = this.getPeriodoTexto(periodo);
-        
+
         if (tipo.startsWith('evolucao')) {
             return this.gerarDadosEvolucao(tipo, periodo, periodoTexto);
         } else {
@@ -2095,7 +2094,7 @@ async loadDashboard() {
                     },
                     tooltip: {
                         callbacks: {
-                            label: function(context) {
+                            label: function (context) {
                                 return context.dataset.label + ': ' + context.parsed.y.toFixed(2) + ' kWh';
                             }
                         }
@@ -2176,7 +2175,7 @@ async loadDashboard() {
                     },
                     tooltip: {
                         callbacks: {
-                            label: function(context) {
+                            label: function (context) {
                                 const label = context.label || '';
                                 const value = context.parsed || 0;
                                 return label + ': ' + value.toFixed(1) + '%';
@@ -2213,13 +2212,13 @@ async loadDashboard() {
 
     gerarTabelaEvolucao(labels, datasets, entidade) {
         const tabela = [];
-        
+
         datasets.forEach(dataset => {
             const total = dataset.data.reduce((a, b) => a + b, 0);
             const media = total / dataset.data.length;
             const max = Math.max(...dataset.data);
             const min = Math.min(...dataset.data);
-            
+
             tabela.push({
                 nome: dataset.label,
                 total: total.toFixed(2),
@@ -2228,7 +2227,7 @@ async loadDashboard() {
                 min: min.toFixed(2)
             });
         });
-        
+
         return tabela;
     }
 
@@ -2299,13 +2298,13 @@ async loadDashboard() {
         try {
             this.currentSearch = name;
             const size = 10;
-            
+
             const query = new URLSearchParams({
                 name: name || '',
                 page,
                 size
             }).toString();
-            
+
             const response = await callApi(`/device-type?${query}`, { method: 'GET' });
 
             // Cria a paginação se ainda não existir
@@ -2514,7 +2513,7 @@ async loadDashboard() {
             this.currentRoomFilter = roomId;
             this.currentDepartmentFilterVinculo = departmentId;
             const size = 10;
-            
+
             // Se tem departmentId, usa a rota específica do departamento
             let response;
             if (departmentId) {
@@ -2524,12 +2523,12 @@ async loadDashboard() {
                     size
                 }).toString();
                 response = await callApi(`/department/${departmentId}/device?${query}`, { method: 'GET' });
-                
+
                 // Se tem roomId, filtra os resultados pelo roomId
                 if (roomId && response.content) {
                     response.content = response.content.filter(v => v.room?.id === roomId);
                 }
-                
+
                 // Se tem deviceId, filtra os resultados pelo deviceId
                 if (deviceId && response.content) {
                     response.content = response.content.filter(v => v.device?.id === deviceId);
@@ -2575,7 +2574,7 @@ async loadDashboard() {
         if (isFirstRender) {
             let dispositivos = [];
             let setores = [];
-            
+
             try {
                 const [dispositivosResponse, setoresResponse] = await Promise.all([
                     callApi('/device?name=&page=0&size=1000', { method: 'GET' }),
@@ -2647,8 +2646,8 @@ async loadDashboard() {
                 placeholder: 'Todos os setores',
                 allowClear: true,
                 language: {
-                    noResults: function() { return "Nenhum setor encontrado"; },
-                    searching: function() { return "Buscando..."; }
+                    noResults: function () { return "Nenhum setor encontrado"; },
+                    searching: function () { return "Buscando..."; }
                 }
             });
 
@@ -2656,8 +2655,8 @@ async loadDashboard() {
                 placeholder: 'Selecione um setor primeiro',
                 allowClear: true,
                 language: {
-                    noResults: function() { return "Nenhuma sala encontrada"; },
-                    searching: function() { return "Buscando..."; }
+                    noResults: function () { return "Nenhuma sala encontrada"; },
+                    searching: function () { return "Buscando..."; }
                 }
             });
 
@@ -2665,71 +2664,71 @@ async loadDashboard() {
                 placeholder: 'Todos os dispositivos',
                 allowClear: true,
                 language: {
-                    noResults: function() { return "Nenhum dispositivo encontrado"; },
-                    searching: function() { return "Buscando..."; }
+                    noResults: function () { return "Nenhum dispositivo encontrado"; },
+                    searching: function () { return "Buscando..."; }
                 }
             });
 
             // EVENTO PARA FILTRAR SALAS E DISPOSITIVOS QUANDO SELECIONAR SETOR
-            $('#filterDepartmentVinculo').on('change', async function() {
+            $('#filterDepartmentVinculo').on('change', async function () {
                 const deptId = $(this).val();
                 const roomSelect = $('#filterRoomVinculo');
                 const deviceSelect = $('#filterDevice');
-                
+
                 if (deptId) {
                     try {
                         // Busca as salas do setor
                         const salasResponse = await callApi(`/department/${deptId}/room?name=&page=0&size=1000`, { method: 'GET' });
                         const salasDoSetor = salasResponse.content || [];
-                        
+
                         roomSelect.empty();
                         roomSelect.append('<option value="">Todas as salas do setor</option>');
                         salasDoSetor.forEach(s => {
                             roomSelect.append(`<option value="${s.id}">${s.name}</option>`);
                         });
-                        
+
                         roomSelect.prop('disabled', false);
                         roomSelect.select2('destroy');
                         roomSelect.select2({
                             placeholder: 'Todas as salas do setor',
                             allowClear: true,
                             language: {
-                                noResults: function() { return "Nenhuma sala encontrada"; },
-                                searching: function() { return "Buscando..."; }
+                                noResults: function () { return "Nenhuma sala encontrada"; },
+                                searching: function () { return "Buscando..."; }
                             }
                         });
 
                         // Busca os dispositivos vinculados ao setor (distinct)
                         const vinculosResponse = await callApi(`/department/${deptId}/device?name=&page=0&size=1000`, { method: 'GET' });
                         const vinculos = vinculosResponse.content || [];
-                        
+
                         // Extrai dispositivos únicos
                         const dispositivosUnicos = [];
                         const dispositivosIds = new Set();
-                        
+
                         vinculos.forEach(v => {
                             if (v.device && !dispositivosIds.has(v.device.id)) {
                                 dispositivosIds.add(v.device.id);
                                 dispositivosUnicos.push(v.device);
                             }
                         });
-                        
+
                         deviceSelect.empty();
                         deviceSelect.append('<option value="">Todos os dispositivos do setor</option>');
                         dispositivosUnicos.forEach(d => {
                             deviceSelect.append(`<option value="${d.id}">${d.name} (${d.deviceType?.name || '-'})</option>`);
                         });
-                        
+
                         deviceSelect.select2('destroy');
                         deviceSelect.select2({
                             placeholder: 'Todos os dispositivos do setor',
                             allowClear: true,
                             language: {
-                                noResults: function() { return "Nenhum dispositivo encontrado"; },
-                                searching: function() { return "Buscando..."; }
+                                noResults: function () { return "Nenhum dispositivo encontrado"; },
+                                searching: function () { return "Buscando..."; }
                             }
                         });
-                        
+
                     } catch (error) {
                         console.error('Erro ao carregar dados do setor:', error);
                     }
@@ -2749,27 +2748,27 @@ async loadDashboard() {
                     try {
                         const dispositivosResponse = await callApi('/device?name=&page=0&size=1000', { method: 'GET' });
                         const todosDispositivos = dispositivosResponse.content || [];
-                        
+
                         deviceSelect.empty();
                         deviceSelect.append('<option value="">Todos os dispositivos</option>');
                         todosDispositivos.forEach(d => {
                             deviceSelect.append(`<option value="${d.id}">${d.name} (${d.deviceType?.name || '-'})</option>`);
                         });
-                        
+
                         deviceSelect.select2('destroy');
                         deviceSelect.select2({
                             placeholder: 'Todos os dispositivos',
                             allowClear: true,
                             language: {
-                                noResults: function() { return "Nenhum dispositivo encontrado"; },
-                                searching: function() { return "Buscando..."; }
+                                noResults: function () { return "Nenhum dispositivo encontrado"; },
+                                searching: function () { return "Buscando..."; }
                             }
                         });
                     } catch (error) {
                         console.error('Erro ao carregar dispositivos:', error);
                     }
                 }
-                
+
                 // Recarregar dados
                 const searchAlias = document.getElementById('searchVinculos')?.value || '';
                 const devId = $('#filterDevice').val() || '';
@@ -2782,37 +2781,37 @@ async loadDashboard() {
                 const rmId = e.target.value;
                 const deptId = $('#filterDepartmentVinculo').val() || '';
                 const deviceSelect = $('#filterDevice');
-                
+
                 if (rmId) {
                     try {
                         // Busca os dispositivos vinculados à sala
                         const vinculosResponse = await callApi(`/room/${rmId}/device?name=&page=0&size=1000`, { method: 'GET' });
                         const vinculos = vinculosResponse.content || [];
-                        
+
                         // Extrai dispositivos únicos
                         const dispositivosUnicos = [];
                         const dispositivosIds = new Set();
-                        
+
                         vinculos.forEach(v => {
                             if (v.device && !dispositivosIds.has(v.device.id)) {
                                 dispositivosIds.add(v.device.id);
                                 dispositivosUnicos.push(v.device);
                             }
                         });
-                        
+
                         deviceSelect.empty();
                         deviceSelect.append('<option value="">Todos os dispositivos da sala</option>');
                         dispositivosUnicos.forEach(d => {
                             deviceSelect.append(`<option value="${d.id}">${d.name} (${d.deviceType?.name || '-'})</option>`);
                         });
-                        
+
                         deviceSelect.select2('destroy');
                         deviceSelect.select2({
                             placeholder: 'Todos os dispositivos da sala',
                             allowClear: true,
                             language: {
-                                noResults: function() { return "Nenhum dispositivo encontrado"; },
-                                searching: function() { return "Buscando..."; }
+                                noResults: function () { return "Nenhum dispositivo encontrado"; },
+                                searching: function () { return "Buscando..."; }
                             }
                         });
                     } catch (error) {
@@ -2823,37 +2822,37 @@ async loadDashboard() {
                     try {
                         const vinculosResponse = await callApi(`/department/${deptId}/device?name=&page=0&size=1000`, { method: 'GET' });
                         const vinculos = vinculosResponse.content || [];
-                        
+
                         const dispositivosUnicos = [];
                         const dispositivosIds = new Set();
-                        
+
                         vinculos.forEach(v => {
                             if (v.device && !dispositivosIds.has(v.device.id)) {
                                 dispositivosIds.add(v.device.id);
                                 dispositivosUnicos.push(v.device);
                             }
                         });
-                        
+
                         deviceSelect.empty();
                         deviceSelect.append('<option value="">Todos os dispositivos do setor</option>');
                         dispositivosUnicos.forEach(d => {
                             deviceSelect.append(`<option value="${d.id}">${d.name} (${d.deviceType?.name || '-'})</option>`);
                         });
-                        
+
                         deviceSelect.select2('destroy');
                         deviceSelect.select2({
                             placeholder: 'Todos os dispositivos do setor',
                             allowClear: true,
                             language: {
-                                noResults: function() { return "Nenhum dispositivo encontrado"; },
-                                searching: function() { return "Buscando..."; }
+                                noResults: function () { return "Nenhum dispositivo encontrado"; },
+                                searching: function () { return "Buscando..."; }
                             }
                         });
                     } catch (error) {
                         console.error('Erro ao carregar dispositivos do setor:', error);
                     }
                 }
-                
+
                 const searchAlias = document.getElementById('searchVinculos')?.value || '';
                 const devId = $('#filterDevice').val() || '';
                 await app.loadVinculos(0, searchAlias, devId, rmId, deptId);
@@ -2887,9 +2886,9 @@ async loadDashboard() {
                 <td><span class="badge badge-secondary">${v.device?.deviceType?.name || '-'}</span></td>
                 <td>${v.averageTimeHour ? v.averageTimeHour.toFixed(1) : '-'}</td>
                 <td>
-                ${v.online 
-                    ? '<span class="badge badge-success">Online</span>' 
-                    : '<span class="badge badge-danger">Offline</span>'}
+                ${v.online
+                ? '<span class="badge badge-success">Online</span>'
+                : '<span class="badge badge-danger">Offline</span>'}
                 </td>
                 <td>
                     <div class="cell-actions">
@@ -2922,7 +2921,7 @@ async loadDashboard() {
         // Carrega dados apenas se for novo vínculo
         let dispositivos = [];
         let setores = [];
-        
+
         if (!vinculoId) {
             try {
                 const [dispositivosResponse, setoresResponse] = await Promise.all([
@@ -3026,8 +3025,8 @@ async loadDashboard() {
                 allowClear: true,
                 width: '100%',
                 language: {
-                    noResults: function() { return "Nenhum setor encontrado"; },
-                    searching: function() { return "Buscando..."; }
+                    noResults: function () { return "Nenhum setor encontrado"; },
+                    searching: function () { return "Buscando..."; }
                 }
             });
 
@@ -3036,8 +3035,8 @@ async loadDashboard() {
                 dropdownParent: $('#formModal'),
                 width: '100%',
                 language: {
-                    noResults: function() { return "Nenhuma sala encontrada"; },
-                    searching: function() { return "Buscando..."; }
+                    noResults: function () { return "Nenhuma sala encontrada"; },
+                    searching: function () { return "Buscando..."; }
                 }
             });
 
@@ -3046,36 +3045,36 @@ async loadDashboard() {
                 dropdownParent: $('#formModal'),
                 width: '100%',
                 language: {
-                    noResults: function() { return "Nenhum dispositivo encontrado"; },
-                    searching: function() { return "Buscando..."; }
+                    noResults: function () { return "Nenhum dispositivo encontrado"; },
+                    searching: function () { return "Buscando..."; }
                 }
             });
 
             // EVENTO PARA FILTRAR SALAS QUANDO SELECIONAR SETOR (mesma lógica da visualização)
-            $('#formDepartmentSelect').on('change', async function() {
+            $('#formDepartmentSelect').on('change', async function () {
                 const setorId = $(this).val();
                 const roomSelect = $('#formRoomSelect');
-                
+
                 if (setorId) {
                     try {
                         // Busca as salas do setor
                         const salasResponse = await callApi(`/department/${setorId}/room?name=&page=0&size=1000`, { method: 'GET' });
                         const salasDoSetor = salasResponse.content || [];
-                        
+
                         roomSelect.empty();
                         roomSelect.append('<option value="">Selecione uma sala</option>');
                         salasDoSetor.forEach(s => {
                             roomSelect.append(`<option value="${s.id}">${s.name}</option>`);
                         });
-                        
+
                         roomSelect.prop('disabled', false);
                         roomSelect.select2('destroy');
                         roomSelect.select2({
                             placeholder: 'Selecione uma sala',
                             dropdownParent: $('#formModal'),
                             language: {
-                                noResults: function() { return "Nenhuma sala encontrada"; },
-                                searching: function() { return "Buscando..."; }
+                                noResults: function () { return "Nenhuma sala encontrada"; },
+                                searching: function () { return "Buscando..."; }
                             }
                         });
                     } catch (error) {
@@ -3155,15 +3154,26 @@ async loadDashboard() {
             }
         });
     }
-    }
+}
 
 // Inicializar aplicacao
 const app = new App();
 // ===== RELATÓRIOS COM FILTROS HIERÁRQUICOS =====
 
 // Adicionar ao App class
-App.prototype.loadRelatorios = function() {
-    const content = document.getElementById('page-content');
+App.prototype.loadRelatorios = async function () {
+    const content = document.getElementById("page-content");
+
+    let setores = [];
+    try {
+        const setoresResponse = await callApi("/department?page=0&size=1000", { method: "GET" });
+        setores = setoresResponse.content || [];
+    } catch (error) {
+        console.error("Erro ao carregar setores:", error);
+    }
+
+    this.data.setores = setores;
+
     content.innerHTML = `
         <div class="relatorios-page">
             <h2>Relatórios de Consumo</h2>
@@ -3175,16 +3185,9 @@ App.prototype.loadRelatorios = function() {
                     <div class="filter-group" style="flex: 1;">
                         <label>Selecione o tipo de análise</label>
                         <select id="tipoRelatorio" onchange="app.updateRelatorio()">
-                            <optgroup label="Evolução de Consumo">
-                                <option value="evolucao-setor">Evolução - Por Setor</option>
-                                <option value="evolucao-sala">Evolução - Por Sala</option>
-                                <option value="evolucao-dispositivo">Evolução - Por Dispositivo (Vínculo)</option>
-                            </optgroup>
-                            <optgroup label="Comparação de Consumo">
-                                <option value="rateio-setor">Comparação - Por Setor</option>
-                                <option value="rateio-sala">Comparação - Por Sala</option>
-                                <option value="rateio-dispositivo">Comparação - Por Dispositivo (Vínculo)</option>
-                            </optgroup>
+                            <option value="evolucao-setor">Por Setor</option>
+                            <option value="evolucao-sala">Por Sala</option>
+                            <option value="evolucao-vinculo">Por Vínculo (Dispositivo)</option>
                         </select>
                     </div>
                 </div>
@@ -3192,19 +3195,23 @@ App.prototype.loadRelatorios = function() {
 
             <!-- Filtros Hierárquicos (Setor > Sala) -->
             <div class="filter-section" id="filtrosHierarquicos">
-                <h3 class="filter-title">Filtros Hierárquicos (Opcional)</h3>
+                <h3 class="filter-title">Filtros Hierárquicos</h3>
                 <div class="filter-row">
-                    <div class="filter-group">
+                    <div class="filter-group" id="filtroSetorContainer">
                         <label>Setor</label>
-                        <select id="filtroSetor" onchange="app.updateFiltroSala()">
-                            <option value="">Todos os Setores</option>
-                            ${this.data.setores.map(s => `<option value="${s.id}">${s.nome}</option>`).join('')}
+                        <select id="filtroSetor" onchange="app.updateFiltroSalaRelatorio()">
+                            <option value="">Selecione um setor</option>
+                            ${setores.map(s => `
+                                <option value="${s.id}">
+                                    ${s.name}
+                                </option>
+                            `).join("")}
                         </select>
                     </div>
-                    <div class="filter-group">
+                    <div class="filter-group" id="filtroSalaContainer">
                         <label>Sala</label>
-                        <select id="filtroSala" disabled>
-                            <option value="">Todas as Salas</option>
+                        <select id="filtroSala" disabled onchange="app.handleSalaChange()">
+                            <option value="">Selecione uma sala</option>
                         </select>
                     </div>
                     <div class="filter-group" style="display: flex; align-items: flex-end;">
@@ -3218,38 +3225,42 @@ App.prototype.loadRelatorios = function() {
             <!-- Seletor de Período -->
             <div class="filter-section">
                 <h3 class="filter-title">Período de Análise</h3>
-                <div class="filter-row">
-                    <div class="filter-group" style="flex: 1;">
-                        <label>Período Pré-definido</label>
-                        <div class="btn-group" style="display: flex; gap: 10px; flex-wrap: wrap;">
-                            <button class="btn btn-outline btn-sm" onclick="app.setPeriodo('dia')">Dia</button>
-                            <button class="btn btn-outline btn-sm" onclick="app.setPeriodo('semana')">Semana</button>
-                            <button class="btn btn-outline btn-sm active" onclick="app.setPeriodo('mes')">Mês</button>
-                        </div>
-                    </div>
+                <div class="filter-row" style="gap: 10px; margin-bottom: 10px;">
+                    <button class="btn btn-outline" onclick="app.aplicarPeriodoHoje()">
+                        <i class="fas fa-calendar-day"></i> Hoje
+                    </button>
+                    <button class="btn btn-outline" onclick="app.aplicarPeriodoSemana()">
+                        <i class="fas fa-calendar-week"></i> Semana
+                    </button>
+                    <button class="btn btn-outline" onclick="app.aplicarPeriodoMes()">
+                        <i class="fas fa-calendar-alt"></i> Mês
+                    </button>
                 </div>
-                <div class="filter-row" style="margin-top: 15px;">
+                <div class="filter-row">
                     <div class="filter-group" style="flex: 1;">
                         <label>Período Personalizado</label>
                         <div style="display: flex; gap: 10px; align-items: center;">
-                            <input type="date" id="dataInicio" class="form-control" style="flex: 1;">
+                            <input type="datetime-local" id="dataInicio" class="form-control" style="flex: 1;">
                             <span>até</span>
-                            <input type="date" id="dataFim" class="form-control" style="flex: 1;">
+                            <input type="datetime-local" id="dataFim" class="form-control" style="flex: 1;">
                             <button class="btn btn-primary" onclick="app.aplicarPeriodoPersonalizado()">Aplicar</button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Container dos Gráficos -->
+            <!-- Container dos Gráficos (Evolução + Rateio) -->
             <div class="charts-grid-2" style="margin-top: 20px;">
                 <!-- Gráfico de Evolução -->
                 <div class="chart-container">
                     <div class="chart-header">
                         <h3 class="chart-title" id="chartTitleEvolucao">Evolução de Consumo</h3>
                     </div>
-                    <div class="chart-body" style="height: 400px;">
+                    <div class="chart-body" style="height: 400px; position: relative;">
                         <canvas id="relatorioChartEvolucao"></canvas>
+                        <div id="mensagemEvolucao" class="chart-message" style="display: none;">
+                            Selecione um período para visualizar os dados.
+                        </div>
                     </div>
                 </div>
 
@@ -3258,237 +3269,484 @@ App.prototype.loadRelatorios = function() {
                     <div class="chart-header">
                         <h3 class="chart-title" id="chartTitleRateio">Rateio de Consumo</h3>
                     </div>
-                    <div class="chart-body" style="height: 400px;">
+                    <div class="chart-body" style="height: 400px; position: relative;">
                         <canvas id="relatorioChartRateio"></canvas>
+                        <div id="mensagemRateio" class="chart-message" style="display: none;">
+                            Selecione um período para visualizar os dados.
+                        </div>
                     </div>
                 </div>
-            </div>
-
-            <!-- Tabela de Dados -->
-            <div class="table-container" style="margin-top: 20px;">
-                <div class="table-header">
-                    <h3>Dados Detalhados</h3>
-                </div>
-                <div id="tabelaDados"></div>
             </div>
         </div>
     `;
 
+    // Inicializar select2
+    $("#filtroSetor").select2({ placeholder: "Selecione um setor", allowClear: true });
+    $("#filtroSala").select2({ placeholder: "Selecione uma sala", allowClear: true });
+
     // Inicializar estado
-    this.periodoAtual = 'mes';
-    this.tipoRelatorioAtual = 'evolucao-setor';
-    this.filtroSetorAtual = '';
-    this.filtroSalaAtual = '';
-    
-    this.renderRelatorioCharts();
+    this.tipoRelatorioAtual = "evolucao-setor";
+    this.filtroSetorAtual = "";
+    this.filtroSalaAtual = "";
+    this.periodoSelecionado = false; // ADICIONADO
+
+    // Chamar updateRelatorio para configurar o estado inicial dos filtros
+    this.updateRelatorio();
 };
 
-App.prototype.updateFiltroSala = function() {
-    const setorId = document.getElementById('filtroSetor').value;
-    const salaSelect = document.getElementById('filtroSala');
+// Função auxiliar para formatar data para datetime-local
+App.prototype.formatDateTimeLocal = function(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+};
+
+// Atualizar filtro de sala quando setor for selecionado
+App.prototype.updateFiltroSalaRelatorio = async function () {
+    const setorId = document.getElementById("filtroSetor").value;
+    const salaSelect = document.getElementById("filtroSala");
+    const tipo = this.tipoRelatorioAtual;
     
-    if (!setorId) {
-        salaSelect.disabled = true;
-        salaSelect.innerHTML = '<option value="">Todas as Salas</option>';
-        this.filtroSetorAtual = '';
-        this.filtroSalaAtual = '';
+    this.filtroSetorAtual = setorId;
+    this.filtroSalaAtual = ""; // Reseta a sala ao mudar o setor
+    
+    // Apenas para Evolução por Vínculo a sala deve ser habilitada
+    if (tipo === "evolucao-vinculo") {
+        if (!setorId) {
+            salaSelect.disabled = true;
+            salaSelect.innerHTML = "<option value=''>Selecione uma sala</option>";
+            $("#filtroSala").val(null).trigger("change.select2");
+            
+            // Atualiza o placeholder
+            $('#filtroSala').select2('destroy');
+            $('#filtroSala').select2({
+                placeholder: 'Selecione um setor primeiro',
+                allowClear: true
+            });
+        } else {
+            try {
+                const salasResponse = await callApi(`/department/${setorId}/room?name=&page=0&size=1000`, { method: "GET" });
+                const salas = salasResponse.content || [];
+
+                salaSelect.disabled = false;
+                salaSelect.innerHTML = "<option value=''>Todas as salas do setor</option>" +
+                    salas.map(s => `<option value="${s.id}">${s.name}</option>`).join("");
+
+                $("#filtroSala").val(null).trigger("change.select2");
+                
+                // Atualiza o placeholder
+                $('#filtroSala').select2('destroy');
+                $('#filtroSala').select2({
+                    placeholder: 'Todas as salas do setor',
+                    allowClear: true
+                });
+            } catch (error) {
+                console.error("Erro ao carregar salas do setor:", error);
+            }
+        }
     } else {
-        salaSelect.disabled = false;
-        const salasDoSetor = this.data.salas.filter(s => {
-            const setor = this.data.setores.find(st => st.id == setorId);
-            return setor && s.setor === setor.nome;
+        // Para evolucao-sala, a sala deve permanecer desabilitada
+        salaSelect.disabled = true;
+        salaSelect.innerHTML = "<option value=''>-</option>";
+        $("#filtroSala").val(null).trigger("change.select2");
+        
+        // Atualiza o placeholder
+        $('#filtroSala').select2('destroy');
+        $('#filtroSala').select2({
+            placeholder: '-',
+            allowClear: true
         });
-        
-        salaSelect.innerHTML = '<option value="">Todas as Salas do Setor</option>' +
-            salasDoSetor.map(s => `<option value="${s.id}">${s.nome}</option>`).join('');
-        
-        this.filtroSetorAtual = setorId;
-        this.filtroSalaAtual = '';
     }
-    
+
     this.renderRelatorioCharts();
 };
 
-App.prototype.limparFiltrosHierarquicos = function() {
-    document.getElementById('filtroSetor').value = '';
-    document.getElementById('filtroSala').value = '';
-    document.getElementById('filtroSala').disabled = true;
-    document.getElementById('filtroSala').innerHTML = '<option value="">Todas as Salas</option>';
-    
-    this.filtroSetorAtual = '';
-    this.filtroSalaAtual = '';
-    
+// Lida com a mudança da sala
+App.prototype.handleSalaChange = function() {
+    this.filtroSalaAtual = document.getElementById("filtroSala").value;
     this.renderRelatorioCharts();
 };
 
-App.prototype.setPeriodo = function(periodo) {
-    this.periodoAtual = periodo;
+// Limpar filtros hierárquicos
+App.prototype.limparFiltrosHierarquicos = function () {
+    $("#filtroSetor").val(null).trigger("change");
+    this.updateFiltroSalaRelatorio(); // Isso vai resetar a sala e renderizar os gráficos
+};
+
+App.prototype.aplicarPeriodoSemana = function () {
+    const agora = new Date();
+    const seteDiasAtras = new Date(agora);
+    seteDiasAtras.setDate(seteDiasAtras.getDate() - 7);
     
-    // Atualizar botões ativos
-    document.querySelectorAll('.btn-group .btn').forEach(btn => btn.classList.remove('active'));
-    event.target.classList.add('active');
+    document.getElementById("dataInicio").value = this.formatDateTimeLocal(seteDiasAtras);
+    document.getElementById("dataFim").value = this.formatDateTimeLocal(agora);
     
-    // Limpar datas personalizadas
-    document.getElementById('dataInicio').value = '';
-    document.getElementById('dataFim').value = '';
-    
+    this.periodoSelecionado = true;
     this.renderRelatorioCharts();
 };
 
-App.prototype.aplicarPeriodoPersonalizado = function() {
-    const dataInicio = document.getElementById('dataInicio').value;
-    const dataFim = document.getElementById('dataFim').value;
+App.prototype.aplicarPeriodoMes = function () {
+    const agora = new Date();
+    const trintaDiasAtras = new Date(agora);
+    trintaDiasAtras.setDate(trintaDiasAtras.getDate() - 30);
     
+    document.getElementById("dataInicio").value = this.formatDateTimeLocal(trintaDiasAtras);
+    document.getElementById("dataFim").value = this.formatDateTimeLocal(agora);
+    
+    this.periodoSelecionado = true;
+    this.renderRelatorioCharts();
+};
+
+// Aplicar período personalizado
+App.prototype.aplicarPeriodoPersonalizado = function () {
+    const dataInicio = document.getElementById("dataInicio").value;
+    const dataFim = document.getElementById("dataFim").value;
+
     if (!dataInicio || !dataFim) {
-        alert('Por favor, selecione ambas as datas');
+        alert("Por favor, selecione ambas as datas");
         return;
     }
-    
+
     if (new Date(dataInicio) > new Date(dataFim)) {
-        alert('A data inicial deve ser anterior à data final');
+        alert("A data inicial deve ser anterior à data final");
+        return;
+    }
+
+    this.periodoSelecionado = true; // ADICIONADO
+    this.renderRelatorioCharts();
+};
+
+// Atualizar tipo de relatório
+App.prototype.updateRelatorio = function () {
+    const tipoSelecionado = document.getElementById("tipoRelatorio").value;
+    this.tipoRelatorioAtual = tipoSelecionado;
+
+    const setorSelect = $("#filtroSetor");
+    const salaSelect = $("#filtroSala");
+
+    // Resetar filtros
+    setorSelect.val(null).trigger("change.select2");
+    salaSelect.val(null).trigger("change.select2");
+    this.filtroSetorAtual = "";
+    this.filtroSalaAtual = "";
+
+    // 1. Evolução por Setor: Desabilita ambos os filtros
+    if (tipoSelecionado === "evolucao-setor") {
+        setorSelect.prop("disabled", true);
+        salaSelect.prop("disabled", true);
+    // 2. Evolução por Sala: Habilita Setor, desabilita Sala
+    } else if (tipoSelecionado === "evolucao-sala") {
+        setorSelect.prop("disabled", false);
+        salaSelect.prop("disabled", true);
+        
+        // Atualiza o placeholder da Sala para indicar que está desabilitada
+        $('#filtroSala').select2('destroy');
+        $('#filtroSala').select2({
+            placeholder: '-',
+            allowClear: true
+        });
+    // 3. Evolução por Vínculo: Habilita ambos (Sala é habilitada após selecionar Setor)
+    } else if (tipoSelecionado === "evolucao-vinculo") {
+        setorSelect.prop("disabled", false);
+        salaSelect.prop("disabled", true);
+    }
+
+    this.renderRelatorioCharts();
+};
+
+// Renderizar AMBOS os gráficos (evolução + rateio) com dados da API
+App.prototype.renderRelatorioCharts = async function () {
+    const canvasEvolucao = document.getElementById("relatorioChartEvolucao");
+    const canvasRateio = document.getElementById("relatorioChartRateio");
+    const msgEvolucao = document.getElementById("mensagemEvolucao");
+    const msgRateio = document.getElementById("mensagemRateio");
+
+    if (!canvasEvolucao || !canvasRateio) return;
+
+    const tipo = this.tipoRelatorioAtual;
+    const dataInicio = document.getElementById("dataInicio").value;
+    const dataFim = document.getElementById("dataFim").value;
+
+    // ADICIONADO: Verificar se um período foi selecionado
+    if (!this.periodoSelecionado) {
+        if (this.chartEvolucao) this.chartEvolucao.destroy();
+        if (this.chartRateio) this.chartRateio.destroy();
+        
+        msgEvolucao.textContent = "Selecione um período para visualizar os dados.";
+        msgRateio.textContent = "Selecione um período para visualizar os dados.";
+        msgEvolucao.style.display = "flex";
+        msgRateio.style.display = "flex";
+        canvasEvolucao.style.display = "none";
+        canvasRateio.style.display = "none";
+        this.renderTabelaDados([]);
+        return;
+    }
+
+    if (!dataInicio || !dataFim) {
+        console.warn("Datas não definidas");
         return;
     }
     
-    this.periodoAtual = 'personalizado';
-    this.dataInicioCustom = dataInicio;
-    this.dataFimCustom = dataFim;
+    // ADICIONADO: Verificar se precisa selecionar Setor (para Sala)
+    if (tipo === "evolucao-sala" && !this.filtroSetorAtual) {
+        if (this.chartEvolucao) this.chartEvolucao.destroy();
+        if (this.chartRateio) this.chartRateio.destroy();
+        
+        msgEvolucao.textContent = "Selecione um Setor para visualizar a evolução por Sala.";
+        msgRateio.textContent = "Selecione um Setor para visualizar o rateio por Sala.";
+        msgEvolucao.style.display = "flex";
+        msgRateio.style.display = "flex";
+        canvasEvolucao.style.display = "none";
+        canvasRateio.style.display = "none";
+        this.renderTabelaDados([]);
+        return;
+    }
     
-    // Remover active de todos os botões
-    document.querySelectorAll('.btn-group .btn').forEach(btn => btn.classList.remove('active'));
-    
-    this.renderRelatorioCharts();
-};
-
-App.prototype.updateRelatorio = function() {
-    const tipoSelecionado = document.getElementById('tipoRelatorio').value;
-    this.tipoRelatorioAtual = tipoSelecionado;
-    
-    // Atualizar seletor de sala quando mudar para dispositivo
-    const salaSelect = document.getElementById('filtroSala');
-    salaSelect.onchange = () => {
-        this.filtroSalaAtual = salaSelect.value;
-        this.renderRelatorioCharts();
-    };
-    
-    this.renderRelatorioCharts();
-};
-
-App.prototype.renderRelatorioCharts = function() {
-    const canvasEvolucao = document.getElementById('relatorioChartEvolucao');
-    const canvasRateio = document.getElementById('relatorioChartRateio');
-    
-    if (!canvasEvolucao || !canvasRateio) return;
+    // MODIFICADO: Lógica de exibição condicional para Evolução por Vínculo
+    if (tipo === "evolucao-vinculo" && !this.filtroSalaAtual) {
+        if (this.chartEvolucao) this.chartEvolucao.destroy();
+        if (this.chartRateio) this.chartRateio.destroy();
+        
+        msgEvolucao.textContent = "Selecione uma Sala para visualizar a evolução por Vínculo.";
+        msgRateio.textContent = "Selecione uma Sala para visualizar o rateio por Vínculo.";
+        msgEvolucao.style.display = "flex";
+        msgRateio.style.display = "flex";
+        canvasEvolucao.style.display = "none";
+        canvasRateio.style.display = "none";
+        this.renderTabelaDados([]);
+        return;
+    }
 
     // Destruir gráficos anteriores
     if (this.chartEvolucao) this.chartEvolucao.destroy();
     if (this.chartRateio) this.chartRateio.destroy();
-
-    const tipo = this.tipoRelatorioAtual;
-    const periodo = this.periodoAtual;
-
-    // Gerar dados para evolução
-    const dadosEvolucao = this.gerarDadosEvolucao(tipo, periodo);
     
-    // Gerar dados para rateio
-    const dadosRateio = this.gerarDadosRateio(tipo, periodo);
-    
-    // Atualizar títulos
-    document.getElementById('chartTitleEvolucao').textContent = dadosEvolucao.titulo;
-    document.getElementById('chartTitleRateio').textContent = dadosRateio.titulo;
+    // Ocultar mensagens e mostrar canvas
+    msgEvolucao.style.display = "none";
+    msgRateio.style.display = "none";
+    canvasEvolucao.style.display = "block";
+    canvasRateio.style.display = "block";
 
-    // Criar gráfico de evolução
-    this.chartEvolucao = new Chart(canvasEvolucao, {
-        type: 'line',
-        data: dadosEvolucao.data,
-        options: dadosEvolucao.options
-    });
+    // Buscar dados de AMBOS os endpoints em paralelo
+    try {
+        const [dadosEvolucao, dadosRateio] = await Promise.all([
+            this.buscarDadosConsumptionEvolution(tipo, dataInicio, dataFim),
+            this.buscarDadosConsumptionRatio(tipo, dataInicio, dataFim)
+        ]);
 
-    // Criar gráfico de rateio
-    this.chartRateio = new Chart(canvasRateio, {
-        type: 'doughnut',
-        data: dadosRateio.data,
-        options: dadosRateio.options
-    });
-    
-    // Atualizar tabela
-    this.renderTabelaDados(dadosEvolucao.tabelaDados);
+        if (!dadosEvolucao || !dadosRateio) {
+            console.error("Nenhum dado retornado da API");
+            this.renderTabelaDados([]);
+            return;
+        }
+
+        // Atualizar títulos
+        document.getElementById("chartTitleEvolucao").textContent = dadosEvolucao.titulo;
+        document.getElementById("chartTitleRateio").textContent = dadosRateio.titulo;
+
+        // Criar gráfico de evolução (linha)
+        this.chartEvolucao = new Chart(canvasEvolucao, {
+            type: "line",
+            data: dadosEvolucao.data,
+            options: dadosEvolucao.options
+        });
+
+        // Criar gráfico de rateio (doughnut)
+        this.chartRateio = new Chart(canvasRateio, {
+            type: "doughnut",
+            data: dadosRateio.data,
+            options: dadosRateio.options
+        });
+
+        // Atualizar tabela (usando dados de evolução)
+        this.renderTabelaDados(dadosEvolucao.tabelaDados);
+    } catch (error) {
+        console.error("Erro ao renderizar gráficos:", error);
+        this.renderTabelaDados([]);
+    }
 };
 
-App.prototype.gerarDadosEvolucao = function(tipo, periodo) {
-    const periodoTexto = this.getPeriodoTexto(periodo);
-    let labels = this.getLabelsParaPeriodo(periodo);
-    let datasets = [];
-    let titulo = '';
-    let tabelaDados = [];
+// Buscar dados do endpoint /api/consumption/evolution
+App.prototype.buscarDadosConsumptionEvolution = async function (tipo, dataInicio, dataFim) {
+    let resource = "";
+    let departmentId = null;
+    let roomId = null;
+    let titulo = "";
 
-    // Aplicar filtros hierárquicos
-    let entidades = [];
+    // Determinar o tipo de recurso e filtros
+    if (tipo === "evolucao-setor") {
+        resource = "DEPARTMENT";
+        titulo = "Evolução de Consumo por Setor";
+    } else if (tipo === "evolucao-sala") {
+        resource = "ROOM";
+        departmentId = this.filtroSetorAtual || null; // Passa departmentId se houver filtro de setor
+        
+        if (departmentId) {
+            const setor = this.data.setores.find(s => s.id === departmentId);
+            titulo = `Evolução de Consumo por Sala - Setor: ${setor?.name || ""}`;
+        } else {
+            titulo = "Evolução de Consumo por Sala (Todos os Setores)";
+        }
+    } else if (tipo === "evolucao-vinculo") {
+        resource = "DEVICE_ROOM";
+        roomId = this.filtroSalaAtual || null; // Passa roomId se houver filtro de sala
+        
+        if (roomId) {
+            try {
+                const salaResponse = await callApi(`/room/${roomId}`, { method: "GET" });
+                titulo = `Evolução de Consumo por Vínculo - Sala: ${salaResponse.name || ""}`;
+            } catch (error) {
+                titulo = "Evolução de Consumo por Vínculo";
+            }
+        } else {
+            // Não deve acontecer devido à guarda no renderRelatorioCharts
+            titulo = "Selecione uma sala";
+        }
+    }
     
-    if (tipo.includes('setor')) {
-        titulo = `Evolução de Consumo por Setor (${periodoTexto})`;
-        if (this.filtroSetorAtual) {
-            const setor = this.data.setores.find(s => s.id == this.filtroSetorAtual);
-            entidades = setor ? [setor] : [];
-            titulo += ` - ${setor.nome}`;
+
+    // Construir URL da API
+    const params = new URLSearchParams({
+        resource: resource,
+        start: dataInicio,
+        end: dataFim
+    });
+
+    if (departmentId) {
+        params.append("departmentId", departmentId);
+    }
+
+    if (roomId) {
+        params.append("roomId", roomId);
+    }
+
+    try {
+        const response = await callApi(`/consumption/evolution?${params.toString()}`, { method: "GET" });
+        return this.processarDadosConsumptionEvolution(response, titulo);
+    } catch (error) {
+        console.error("Erro ao buscar dados de consumption/evolution:", error);
+        return null;
+    }
+};
+
+// Buscar dados do endpoint /api/consumption/ratio
+App.prototype.buscarDadosConsumptionRatio = async function (tipo, dataInicio, dataFim) {
+    let resource = "";
+    let departmentId = null;
+    let roomId = null;
+    let titulo = "";
+
+    // Determinar o tipo de recurso e filtros (mesma lógica do evolution)
+    if (tipo === "evolucao-setor") {
+        resource = "DEPARTMENT";
+        titulo = "Rateio de Consumo por Setor";
+    } else if (tipo === "evolucao-sala") {
+        resource = "ROOM";
+        departmentId = this.filtroSetorAtual || null; // Passa departmentId se houver filtro de setor
+        
+        if (departmentId) {
+            const setor = this.data.setores.find(s => s.id === departmentId);
+            titulo = `Rateio de Consumo por Sala - Setor: ${setor?.name || ""}`;
         } else {
-            entidades = this.data.setores;
+            titulo = "Rateio de Consumo por Sala (Todos os Setores)";
         }
-    } else if (tipo.includes('sala')) {
-        titulo = `Evolução de Consumo por Sala (${periodoTexto})`;
-        if (this.filtroSalaAtual) {
-            const sala = this.data.salas.find(s => s.id == this.filtroSalaAtual);
-            entidades = sala ? [sala] : [];
-            titulo += ` - ${sala.nome}`;
-        } else if (this.filtroSetorAtual) {
-            const setor = this.data.setores.find(s => s.id == this.filtroSetorAtual);
-            entidades = this.data.salas.filter(s => s.setor === setor.nome);
-            titulo += ` - Setor: ${setor.nome}`;
+    } else if (tipo === "evolucao-vinculo") {
+        resource = "DEVICE_ROOM";
+        roomId = this.filtroSalaAtual || null; // Passa roomId se houver filtro de sala
+        
+        if (roomId) {
+            try {
+                const salaResponse = await callApi(`/room/${roomId}`, { method: "GET" });
+                titulo = `Rateio de Consumo por Vínculo - Sala: ${salaResponse.name || ""}`;
+            } catch (error) {
+                titulo = "Rateio de Consumo por Vínculo";
+            }
         } else {
-            entidades = this.data.salas;
-        }
-    } else if (tipo.includes('dispositivo')) {
-        titulo = `Evolução de Consumo por Dispositivo (${periodoTexto})`;
-        if (this.filtroSalaAtual) {
-            const sala = this.data.salas.find(s => s.id == this.filtroSalaAtual);
-            entidades = this.data.vinculos.filter(v => v.sala === sala.nome);
-            titulo += ` - Sala: ${sala.nome}`;
-        } else if (this.filtroSetorAtual) {
-            const setor = this.data.setores.find(s => s.id == this.filtroSetorAtual);
-            const salasDoSetor = this.data.salas.filter(s => s.setor === setor.nome);
-            entidades = this.data.vinculos.filter(v => 
-                salasDoSetor.some(sala => sala.nome === v.sala)
-            );
-            titulo += ` - Setor: ${setor.nome}`;
-        } else {
-            entidades = this.data.vinculos;
+            titulo = "Selecione uma sala";
         }
     }
 
-    // Gerar datasets
-    const cores = ['#fb8500', '#023047', '#219ebc', '#8ecae6', '#ffb703', '#06d6a0'];
-    entidades.forEach((entidade, index) => {
-        const nome = entidade.nome || entidade.apelido;
-        const dados = this.gerarDadosAleatorios(labels.length, 100, 500);
-        const media = dados.reduce((a, b) => a + b, 0) / dados.length;
-        const min = Math.min(...dados);
-        const max = Math.max(...dados);
-        
+    // Construir URL da API
+    const params = new URLSearchParams({
+        resource: resource,
+        start: dataInicio,
+        end: dataFim
+    });
+
+    if (departmentId) {
+        params.append("departmentId", departmentId);
+    }
+
+    if (roomId) {
+        params.append("roomId", roomId);
+    }
+
+    try {
+        const response = await callApi(`/consumption/ratio?${params.toString()}`, { method: "GET" });
+        return this.processarDadosConsumptionRatio(response, titulo);
+    } catch (error) {
+        console.error("Erro ao buscar dados de consumption/ratio:", error);
+        return null;
+    }
+};
+
+// Processar dados retornados da API /consumption/evolution
+App.prototype.processarDadosConsumptionEvolution = function (apiResponse, titulo) {
+    if (!apiResponse || !apiResponse.series || apiResponse.series.length === 0) {
+        console.warn("Nenhuma série de dados retornada para Evolução");
+        return { titulo, data: { labels: [], datasets: [] }, options: {}, tabelaDados: [] };
+    }
+
+    const labels = [];
+    const datasets = [];
+    const tabelaDados = [];
+    const cores = ["#fb8500", "#023047", "#219ebc", "#8ecae6", "#ffb703", "#06d6a0", "#ef476f", "#06a77d", "#118ab2", "#073b4c"];
+
+    // Extrair labels (timestamps)
+    if (apiResponse.series.length > 0 && apiResponse.series[0].points) {
+        apiResponse.series[0].points.forEach(point => {
+            const timestamp = new Date(point.timestamp);
+            let label = "";
+            if (apiResponse.granularity === "HOURLY") {
+                label = timestamp.toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+            } else if (apiResponse.granularity === "DAILY") {
+                label = timestamp.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
+            } else if (apiResponse.granularity === "WEEKLY") {
+                label = `Semana ${timestamp.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}`;
+            } else if (apiResponse.granularity === "MONTHLY") {
+                label = timestamp.toLocaleDateString("pt-BR", { month: "short", year: "numeric" });
+            } else {
+                label = timestamp.toLocaleDateString("pt-BR");
+            }
+            labels.push(label);
+        });
+    }
+
+    // Processar cada série
+    apiResponse.series.forEach((serie, index) => {
+        const dados = serie.points.map(point => point.avgPotencia / 1000); // Converter para kW
+
         datasets.push({
-            label: nome,
+            label: serie.name,
             data: dados,
             borderColor: cores[index % cores.length],
-            backgroundColor: cores[index % cores.length] + '20',
+            backgroundColor: cores[index % cores.length] + "20",
             tension: 0.4,
             fill: true,
             borderWidth: 2
         });
-        
+
+        // Adicionar à tabela
         tabelaDados.push({
-            nome: nome,
-            total: dados.reduce((a, b) => a + b, 0).toFixed(2),
-            media: media.toFixed(2),
-            max: max.toFixed(2),
-            min: min.toFixed(2)
+            nome: serie.name,
+            total: (serie.statistics.totalConsumption / 1000).toFixed(2),
+            media: (serie.statistics.avgConsumption / 1000).toFixed(2),
+            max: (serie.statistics.maxConsumption / 1000).toFixed(2),
+            min: (serie.statistics.minConsumption / 1000).toFixed(2),
+            leituras: serie.statistics.totalReadings
         });
     });
 
@@ -3499,18 +3757,18 @@ App.prototype.gerarDadosEvolucao = function(tipo, periodo) {
             responsive: true,
             maintainAspectRatio: false,
             interaction: {
-                mode: 'index',
+                mode: "index",
                 intersect: false
             },
             plugins: {
                 legend: {
                     display: true,
-                    position: 'top'
+                    position: "top"
                 },
                 tooltip: {
                     callbacks: {
-                        label: function(context) {
-                            return context.dataset.label + ': ' + context.parsed.y.toFixed(2) + ' kWh';
+                        label: function (context) {
+                            return context.dataset.label + ": " + context.parsed.y.toFixed(2) + " kW";
                         }
                     }
                 }
@@ -3520,13 +3778,13 @@ App.prototype.gerarDadosEvolucao = function(tipo, periodo) {
                     beginAtZero: true,
                     title: {
                         display: true,
-                        text: 'Consumo (kWh)'
+                        text: "Potência Média (kW)"
                     }
                 },
                 x: {
                     title: {
                         display: true,
-                        text: 'Período'
+                        text: "Período"
                     }
                 }
             }
@@ -3535,62 +3793,24 @@ App.prototype.gerarDadosEvolucao = function(tipo, periodo) {
     };
 };
 
-App.prototype.gerarDadosRateio = function(tipo, periodo) {
-    const periodoTexto = this.getPeriodoTexto(periodo);
-    let labels = [];
-    let data = [];
-    let titulo = '';
-
-    // Aplicar filtros hierárquicos
-    let entidades = [];
-    
-    if (tipo.includes('setor')) {
-        titulo = `Rateio de Consumo por Setor (${periodoTexto})`;
-        if (this.filtroSetorAtual) {
-            const setor = this.data.setores.find(s => s.id == this.filtroSetorAtual);
-            entidades = setor ? [setor] : [];
-            titulo += ` - ${setor.nome}`;
-        } else {
-            entidades = this.data.setores;
-        }
-    } else if (tipo.includes('sala')) {
-        titulo = `Rateio de Consumo por Sala (${periodoTexto})`;
-        if (this.filtroSalaAtual) {
-            const sala = this.data.salas.find(s => s.id == this.filtroSalaAtual);
-            entidades = sala ? [sala] : [];
-            titulo += ` - ${sala.nome}`;
-        } else if (this.filtroSetorAtual) {
-            const setor = this.data.setores.find(s => s.id == this.filtroSetorAtual);
-            entidades = this.data.salas.filter(s => s.setor === setor.nome);
-            titulo += ` - Setor: ${setor.nome}`;
-        } else {
-            entidades = this.data.salas;
-        }
-    } else if (tipo.includes('dispositivo')) {
-        titulo = `Rateio de Consumo por Dispositivo (${periodoTexto})`;
-        if (this.filtroSalaAtual) {
-            const sala = this.data.salas.find(s => s.id == this.filtroSalaAtual);
-            entidades = this.data.vinculos.filter(v => v.sala === sala.nome);
-            titulo += ` - Sala: ${sala.nome}`;
-        } else if (this.filtroSetorAtual) {
-            const setor = this.data.setores.find(s => s.id == this.filtroSetorAtual);
-            const salasDoSetor = this.data.salas.filter(s => s.setor === setor.nome);
-            entidades = this.data.vinculos.filter(v => 
-                salasDoSetor.some(sala => sala.nome === v.sala)
-            );
-            titulo += ` - Setor: ${setor.nome}`;
-        } else {
-            entidades = this.data.vinculos;
-        }
+// Processar dados retornados da API /consumption/ratio
+App.prototype.processarDadosConsumptionRatio = function (apiResponse, titulo) {
+    if (!apiResponse || !apiResponse.data || apiResponse.data.length === 0) {
+        console.warn("Nenhum dado de rateio retornado");
+        return { titulo, data: { labels: [], datasets: [] }, options: {} };
     }
 
-    // Gerar dados de rateio
-    entidades.forEach(entidade => {
-        labels.push(entidade.nome || entidade.apelido);
-        data.push(Math.random() * 500 + 100);
-    });
+    const labels = [];
+    const data = [];
+    const percentages = [];
+    const cores = ["#fb8500", "#023047", "#219ebc", "#8ecae6", "#ffb703", "#06d6a0", "#ef476f", "#06a77d", "#118ab2", "#073b4c"];
 
-    const cores = ['#fb8500', '#023047', '#219ebc', '#8ecae6', '#ffb703', '#06d6a0', '#ef476f', '#06a77d'];
+    // Processar dados de rateio
+    apiResponse.data.forEach(item => {
+        labels.push(item.name);
+        data.push(item.consumption / 1000); // Converter para kW
+        percentages.push(item.percentage);
+    });
 
     return {
         titulo,
@@ -3599,7 +3819,7 @@ App.prototype.gerarDadosRateio = function(tipo, periodo) {
             datasets: [{
                 data,
                 backgroundColor: cores.slice(0, labels.length),
-                borderColor: '#ffffff',
+                borderColor: "#ffffff",
                 borderWidth: 2
             }]
         },
@@ -3609,69 +3829,40 @@ App.prototype.gerarDadosRateio = function(tipo, periodo) {
             plugins: {
                 legend: {
                     display: true,
-                    position: 'bottom'
+                    position: "bottom"
                 },
                 tooltip: {
                     callbacks: {
-                        label: function(context) {
-                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                            const percentual = (context.parsed / total * 100).toFixed(1);
-                            return context.label + ': ' + context.parsed.toFixed(2) + ' kWh (' + percentual + '%)';
+                        label: function (context) {
+                            const percentage = percentages[context.dataIndex];
+                            return context.label + ": " + context.parsed.toFixed(2) + " kW (" + percentage.toFixed(1) + "%)";
                         }
                     }
                 }
             }
-        }
+        },
+        totalConsumption: apiResponse.totalConsumption / 1000 // kW
     };
 };
 
-App.prototype.getLabelsParaPeriodo = function(periodo) {
-    if (periodo === 'dia') {
-        const labels = [];
-        for (let i = 0; i < 24; i++) {
-            labels.push(`${String(i).padStart(2, '0')}:00`);
-        }
-        return labels;
-    } else if (periodo === 'semana') {
-        return ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
-    } else if (periodo === 'mes') {
-        return ['Semana 1', 'Semana 2', 'Semana 3', 'Semana 4'];
-    } else {
-        return ['Período 1', 'Período 2', 'Período 3', 'Período 4'];
+// Renderizar tabela de dados
+App.prototype.renderTabelaDados = function (dados) {
+    const container = document.getElementById("tabelaDados");
+    if (!container || !dados || dados.length === 0) {
+        container.innerHTML = "<p style=\"text-align: center; padding: 20px;\">Nenhum dado disponível</p>";
+        return;
     }
-};
-
-App.prototype.getPeriodoTexto = function(periodo) {
-    const textos = {
-        'dia': 'Dia',
-        'semana': 'Semana',
-        'mes': 'Mês',
-        'personalizado': 'Período Personalizado'
-    };
-    return textos[periodo] || 'Período';
-};
-
-App.prototype.gerarDadosAleatorios = function(quantidade, min, max) {
-    const dados = [];
-    for (let i = 0; i < quantidade; i++) {
-        dados.push(Math.random() * (max - min) + min);
-    }
-    return dados;
-};
-
-App.prototype.renderTabelaDados = function(dados) {
-    const container = document.getElementById('tabelaDados');
-    if (!container || !dados || dados.length === 0) return;
 
     container.innerHTML = `
         <table class="data-table">
             <thead>
                 <tr>
                     <th>Nome</th>
-                    <th>Total (kWh)</th>
-                    <th>Média (kWh)</th>
-                    <th>Máximo (kWh)</th>
-                    <th>Mínimo (kWh)</th>
+                    <th>Total (kW)</th>
+                    <th>Média (kW)</th>
+                    <th>Máximo (kW)</th>
+                    <th>Mínimo (kW)</th>
+                    <th>Leituras</th>
                 </tr>
             </thead>
             <tbody>
@@ -3682,15 +3873,16 @@ App.prototype.renderTabelaDados = function(dados) {
                         <td>${item.media}</td>
                         <td>${item.max}</td>
                         <td>${item.min}</td>
+                        <td>${item.leituras || "-"}</td>
                     </tr>
-                `).join('')}
+                `).join("")}
             </tbody>
         </table>
     `;
 };
 // ===== ABA DE CONSUMO COM 3 GRÁFICOS =====
 
-App.prototype.loadConsumo = function() {
+App.prototype.loadConsumo = function () {
     const content = document.getElementById('page-content');
     content.innerHTML = `
         <div class="consumo-page">
@@ -3845,58 +4037,46 @@ App.prototype.loadConsumo = function() {
     // Inicializar estado
     this.periodoConsumo = 'dia';
     this.dispositivoFiltrado = '';
-    
+
     this.renderConsumoCharts();
 };
 
-App.prototype.setPeriodoConsumo = function(periodo) {
+App.prototype.setPeriodoConsumo = function (periodo) {
     this.periodoConsumo = periodo;
-    
+
     // Atualizar botões ativos
     document.querySelectorAll('.btn-group .btn').forEach(btn => btn.classList.remove('active'));
     event.target.classList.add('active');
-    
+
     // Limpar datas personalizadas
     document.getElementById('dataInicioConsumo').value = '';
     document.getElementById('dataFimConsumo').value = '';
-    
+
     this.renderConsumoCharts();
 };
 
-App.prototype.aplicarPeriodoConsumoPersonalizado = function() {
-    const dataInicio = document.getElementById('dataInicioConsumo').value;
-    const dataFim = document.getElementById('dataFimConsumo').value;
+App.prototype.aplicarPeriodoHoje = function () {
+    const agora = new Date();
+    const ontem = new Date(agora);
+    ontem.setDate(ontem.getDate() - 1);
     
-    if (!dataInicio || !dataFim) {
-        alert('Por favor, selecione ambas as datas');
-        return;
-    }
+    document.getElementById("dataInicio").value = this.formatDateTimeLocal(ontem);
+    document.getElementById("dataFim").value = this.formatDateTimeLocal(agora);
     
-    if (new Date(dataInicio) > new Date(dataFim)) {
-        alert('A data inicial deve ser anterior à data final');
-        return;
-    }
-    
-    this.periodoConsumo = 'personalizado';
-    this.dataInicioConsumoCustom = dataInicio;
-    this.dataFimConsumoCustom = dataFim;
-    
-    // Remover active de todos os botões
-    document.querySelectorAll('.btn-group .btn').forEach(btn => btn.classList.remove('active'));
-    
-    this.renderConsumoCharts();
+    this.periodoSelecionado = true;
+    this.renderRelatorioCharts();
 };
 
-App.prototype.updateConsumoCharts = function() {
+App.prototype.updateConsumoCharts = function () {
     this.dispositivoFiltrado = document.getElementById('filtroDispositivo').value;
     this.renderConsumoCharts();
 };
 
-App.prototype.renderConsumoCharts = function() {
+App.prototype.renderConsumoCharts = function () {
     const canvasTensao = document.getElementById('tensaoChart');
     const canvasCorrente = document.getElementById('correnteChart');
     const canvasPotencia = document.getElementById('potenciaChart');
-    
+
     if (!canvasTensao || !canvasCorrente || !canvasPotencia) return;
 
     // Destruir gráficos anteriores
@@ -3906,7 +4086,7 @@ App.prototype.renderConsumoCharts = function() {
 
     // Gerar labels baseado no período
     const labels = this.getLabelsParaPeriodo(this.periodoConsumo);
-    
+
     // Gerar dados para cada gráfico
     const dadosTensao = this.gerarDadosAleatorios(labels.length, 210, 230);
     const dadosCorrente = this.gerarDadosAleatorios(labels.length, 10, 25);
@@ -3927,11 +4107,11 @@ App.prototype.renderConsumoCharts = function() {
     document.getElementById('tensaoMedia').textContent = statsTensao.media + ' V';
     document.getElementById('tensaoMin').textContent = statsTensao.min + ' V';
     document.getElementById('tensaoMax').textContent = statsTensao.max + ' V';
-    
+
     document.getElementById('correnteMedia').textContent = statsCorrente.media + ' A';
     document.getElementById('correnteMin').textContent = statsCorrente.min + ' A';
     document.getElementById('correnteMax').textContent = statsCorrente.max + ' A';
-    
+
     document.getElementById('potenciaMedia').textContent = statsPotencia.media + ' kW';
     document.getElementById('potenciaMin').textContent = statsPotencia.min + ' kW';
     document.getElementById('potenciaMax').textContent = statsPotencia.max + ' kW';
@@ -4007,7 +4187,7 @@ App.prototype.renderConsumoCharts = function() {
                 ...commonOptions.plugins,
                 tooltip: {
                     callbacks: {
-                        label: function(context) {
+                        label: function (context) {
                             return context.dataset.label + ': ' + context.parsed.y.toFixed(2) + ' V';
                         }
                     }
@@ -4076,7 +4256,7 @@ App.prototype.renderConsumoCharts = function() {
                 ...commonOptions.plugins,
                 tooltip: {
                     callbacks: {
-                        label: function(context) {
+                        label: function (context) {
                             return context.dataset.label + ': ' + context.parsed.y.toFixed(2) + ' A';
                         }
                     }
@@ -4145,7 +4325,7 @@ App.prototype.renderConsumoCharts = function() {
                 ...commonOptions.plugins,
                 tooltip: {
                     callbacks: {
-                        label: function(context) {
+                        label: function (context) {
                             return context.dataset.label + ': ' + context.parsed.y.toFixed(2) + ' kW';
                         }
                     }
