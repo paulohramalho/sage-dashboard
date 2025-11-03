@@ -65,6 +65,8 @@ class App {
                 confirmText: 'Sim, sair agora',
                 cancelText: 'Não, continuar logado(a)',
                 onConfirm: () => {
+                    document.cookie = "USER_TOKEN=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+                    window.location = "/login"
                 }
             });
         });
@@ -869,7 +871,7 @@ class App {
         const tbody = document.getElementById('setoresTableBody');
         tbody.innerHTML = items.length > 0 ? items.map(s => `
             <tr>
-                <td>${s.name || '-'}</td>
+                <td><strong>${s.name || '-'}</strong></td>
                 <td>${s.description || '-'}</td>
                 <td>
                     <div class="cell-actions">
@@ -1132,7 +1134,7 @@ class App {
         const tbody = document.getElementById('salasTableBody');
         tbody.innerHTML = items.length > 0 ? items.map(s => `
             <tr>
-                <td>${s.name || '-'}</td>
+                <td><strong>${s.name || '-'}</strong></td>
                 <td>${s.description || '-'}</td>
                 <td><span class="badge badge-info">${s.department?.name || '-'}</span></td>
                 <td>
@@ -1441,7 +1443,7 @@ class App {
         const tbody = document.getElementById('dispositivosTableBody');
         tbody.innerHTML = items.length > 0 ? items.map(d => `
             <tr>
-                <td>${d.name || '-'}</td>
+                <td><strong>${d.name || '-'}</strong></td>
                 <td>${d.power ? d.power.toFixed(2) : '-'}</td>
                 <td><span class="badge badge-info">${d.deviceType?.name || '-'}</span></td>
                 <td>
@@ -2319,7 +2321,7 @@ class App {
         const tbody = document.getElementById('tiposDispositivosTableBody');
         tbody.innerHTML = items.length > 0 ? items.map(t => `
             <tr>
-                <td>${t.name || '-'}</td>
+                <td><strong>${t.name || '-'}</strong></td>
                 <td>
                     <div class="cell-actions">
                         <button class="action-btn action-btn-edit" 

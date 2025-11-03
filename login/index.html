@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | Sage Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="/css/login.css">
+</head>
+
+<body>
+    <script>
+        function isUserLogged() {
+            const name = 'USER_TOKEN=';
+            const decodedCookie = decodeURIComponent(document.cookie);
+            const ca = decodedCookie.split(';');
+            for (let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) == ' ') {
+                    c = c.substring(1);
+                }
+                if (c.indexOf(name) == 0) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        if (isUserLogged()) window.location = '/'
+    </script>
+    <div class="container">
+        <!-- Login Card -->
+        <div class="card" id="login-card">
+            <h2>Bem-vindo ao SAGE</h2>
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="login-email">E-mail</label>
+                    <input type="email" id="login-email" required placeholder="seu@email.com">
+                </div>
+                <div class="form-group">
+                    <label for="login-password">Senha</label>
+                    <input type="password" id="login-password" required placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn btn-primary">Entrar</button>
+            </form>
+            <p class="switch-form">Não tem conta? <a href="#" id="show-register">Cadastre-se</a></p>
+        </div>
+
+        <!-- Register Card -->
+        <div class="card hidden" id="register-card">
+            <h2>Criar Conta SAGE</h2>
+
+            <!-- Progress Bar -->
+            <div class="progress-bar" data-step="1">
+                <div class="progress-step active">1</div>
+                <div class="progress-step">2</div>
+                <div class="progress-step">3</div>
+            </div>
+
+            <form id="register-form">
+                <!-- Step 1: Dados do Administrador -->
+                <div class="form-step active" data-step="1">
+                    <div class="form-group">
+                        <label for="adminName">Nome Completo</label>
+                        <input type="text" id="adminName" required placeholder="João Silva">
+                    </div>
+                    <div class="form-group">
+                        <label for="adminEmail">E-mail</label>
+                        <input type="email" id="adminEmail" required placeholder="joao@empresa.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="adminPassword">Senha</label>
+                        <input type="password" id="adminPassword" required minlength="8"
+                            placeholder="Mínimo 8 caracteres">
+                        <div class="password-requirements" id="passwordRequirements">
+                            <h4>Requisitos da senha:</h4>
+                            <div class="requirement" id="req-length">Mínimo de 8 caracteres</div>
+                            <div class="requirement" id="req-uppercase">Pelo menos uma letra maiúscula</div>
+                            <div class="requirement" id="req-special">Pelo menos um caractere especial (!@#$%^&*)</div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="adminPasswordConfirm">Confirmar Senha</label>
+                        <input type="password" id="adminPasswordConfirm" required minlength="8"
+                            placeholder="Digite a senha novamente">
+                    </div>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-secondary" id="back-to-login">Voltar</button>
+                        <button type="button" class="btn btn-primary" id="next-step-1">Próximo</button>
+                    </div>
+                </div>
+
+                <!-- Step 2: Dados da Empresa -->
+                <div class="form-step" data-step="2">
+                    <div class="form-group">
+                        <label for="cnpj">CNPJ</label>
+                        <input type="text" id="cnpj" required maxlength="14" placeholder="00000000000000">
+                    </div>
+                    <div class="form-group">
+                        <label for="razaoSocial">Razão Social</label>
+                        <input type="text" id="razaoSocial" required placeholder="Empresa LTDA">
+                    </div>
+                    <div class="form-group">
+                        <label for="nomeFantasia">Nome Fantasia</label>
+                        <input type="text" id="nomeFantasia" required placeholder="Minha Empresa">
+                    </div>
+                    <div class="form-group">
+                        <label for="telefone">Telefone</label>
+                        <input type="tel" id="telefone" required placeholder="(11) 98765-4321">
+                    </div>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-secondary" id="prev-step-2">Anterior</button>
+                        <button type="button" class="btn btn-primary" id="next-step-2">Próximo</button>
+                    </div>
+                </div>
+
+                <!-- Step 3: Endereço -->
+                <div class="form-step" data-step="3">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="zipCode">CEP</label>
+                            <input type="text" id="zipCode" required maxlength="8" placeholder="00000000">
+                        </div>
+                        <div class="form-group">
+                            <label for="number">Número</label>
+                            <input type="number" id="number" required placeholder="123">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="logradouro">Logradouro</label>
+                        <input type="text" id="logradouro" required placeholder="Rua Exemplo">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="bairro">Bairro</label>
+                            <input type="text" id="bairro" required placeholder="Centro">
+                        </div>
+                        <div class="form-group">
+                            <label for="complemento">Complemento</label>
+                            <input type="text" id="complemento" placeholder="Apto 101">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="city">Cidade</label>
+                            <input type="text" id="city" required placeholder="São Paulo">
+                        </div>
+                        <div class="form-group">
+                            <label for="uf">UF</label>
+                            <input type="text" id="uf" required maxlength="2" placeholder="SP">
+                        </div>
+                    </div>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-secondary" id="prev-step-3">Anterior</button>
+                        <button type="submit" class="btn btn-primary">Cadastrar</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script src="/js/config.js"></script>
+    <script src="/js/login.js"></script>
+</body>
+
+</html>
