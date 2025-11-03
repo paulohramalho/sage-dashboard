@@ -721,16 +721,16 @@ class App {
                     <div class="form-row">
                         <div class="form-group">
                             <label>Nome <span class="required">*</span></label>
-                            <input type="text" name="nome" value="${usuario ? usuario.nome : ''}" required>
+                            <input type="text" name="nome" value="${usuario ? usuario.nome : ''}">
                         </div>
                         <div class="form-group">
                             <label>Email <span class="required">*</span></label>
-                            <input type="email" name="email" value="${usuario ? usuario.email : ''}" required>
+                            <input type="email" name="email" value="${usuario ? usuario.email : ''}">
                         </div>
                     </div>
                     <div class="form-group">
                         <label>Perfil <span class="required">*</span></label>
-                        <select name="role" required>
+                        <select name="role">
                             <option value="">Selecione um perfil</option>
                             <option value="Admin" ${usuario && usuario.role === 'Admin' ? 'selected' : ''}>Admin</option>
                             <option value="Usuário" ${usuario && usuario.role === 'Usuário' ? 'selected' : ''}>Usuário</option>
@@ -1502,11 +1502,11 @@ class App {
                 <form id="dispositivoForm">
                     <div class="form-group">
                         <label>Nome <span class="required">*</span></label>
-                        <input type="text" name="name" value="${dispositivo ? dispositivo.name : ''}" required>
+                        <input type="text" name="name" value="${dispositivo ? dispositivo.name : ''}">
                     </div>
                     <div class="form-group">
                         <label>Potência (W) <span class="required">*</span></label>
-                        <input type="number" name="power" step="0.01" value="${dispositivo ? dispositivo.power : ''}" required>
+                        <input type="number" name="power" step="0.01" value="${dispositivo ? dispositivo.power : ''}">
                     </div>
                     <div class="form-group">
                         <label>Tipo de Dispositivo <span class="required">*</span></label>
@@ -1936,9 +1936,6 @@ class App {
         };
 
         this.currentChart = new Chart(canvas, config);
-
-        // Atualizar tabela de dados
-        this.renderTabelaDados(dadosGrafico.tabelaDados);
     }
 
     gerarDadosRelatorio(tipo, periodo) {
@@ -2229,69 +2226,6 @@ class App {
         });
 
         return tabela;
-    }
-
-    renderTabelaDados(dados) {
-        const container = document.getElementById('tabelaDados');
-        if (!container) return;
-
-        if (Array.isArray(dados) && dados.length > 0) {
-            // Verificar se é tabela de rateio ou evolução
-            if (dados[0].percentual !== undefined) {
-                // Tabela de rateio
-                container.innerHTML = `
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Nome</th>
-                                <th>Consumo (kWh)</th>
-                                <th>Percentual (%)</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${dados.map(item => `
-                                <tr>
-                                    <td><strong>${item.nome}</strong></td>
-                                    <td>${item.consumo.toFixed(2)} kWh</td>
-                                    <td>${item.percentual.toFixed(1)}%</td>
-                                </tr>
-                            `).join('')}
-                            <tr style="background: #f8f9fa; font-weight: bold;">
-                                <td>Total</td>
-                                <td>${dados.reduce((a, b) => a + b.consumo, 0).toFixed(2)} kWh</td>
-                                <td>100%</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                `;
-            } else {
-                // Tabela de evolução
-                container.innerHTML = `
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Nome</th>
-                                <th>Total (kWh)</th>
-                                <th>Média (kWh)</th>
-                                <th>Máximo (kWh)</th>
-                                <th>Mínimo (kWh)</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${dados.map(item => `
-                                <tr>
-                                    <td><strong>${item.nome}</strong></td>
-                                    <td>${item.total} kWh</td>
-                                    <td>${item.media} kWh</td>
-                                    <td>${item.max} kWh</td>
-                                    <td>${item.min} kWh</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                `;
-            }
-        }
     }
 
     async loadTiposDispositivos(page = 0, name = '') {
@@ -2952,7 +2886,7 @@ class App {
                 <form id="vinculoForm">
                     <div class="form-group">
                         <label>Apelido <span class="required">*</span></label>
-                        <input type="text" name="alias" value="${vinculo ? vinculo.alias : ''}" placeholder="Ex: Ar Sala Reunião" required>
+                        <input type="text" name="alias" value="${vinculo ? vinculo.alias : ''}" placeholder="Ex: Ar Sala Reunião">
                     </div>
                     
                     <div class="form-group">
@@ -2961,7 +2895,7 @@ class App {
                             <input type="text" value="${vinculo.room?.department?.name || '-'}" disabled>
                             <small style="color: #666; font-size: 12px; margin-top: 5px; display: block;">O setor não pode ser alterado</small>
                         ` : `
-                            <select id="formDepartmentSelect" class="select2-search" required>
+                            <select id="formDepartmentSelect" class="select2-search">
                                 <option value="">Selecione um setor</option>
                                 ${setores.map(s => `
                                     <option value="${s.id}">
@@ -2978,7 +2912,7 @@ class App {
                             <input type="text" value="${vinculo.room?.name || '-'}" disabled>
                             <small style="color: #666; font-size: 12px; margin-top: 5px; display: block;">A sala não pode ser alterada</small>
                         ` : `
-                            <select name="roomId" id="formRoomSelect" class="select2-search" disabled required>
+                            <select name="roomId" id="formRoomSelect" class="select2-search" disabled>
                                 <option value="">Selecione um setor primeiro</option>
                             </select>
                         `}
@@ -2990,7 +2924,7 @@ class App {
                             <input type="text" value="${vinculo.device?.name || '-'} (${vinculo.device?.deviceType?.name || '-'}) - ${vinculo.device?.power}W" disabled>
                             <small style="color: #666; font-size: 12px; margin-top: 5px; display: block;">O dispositivo não pode ser alterado</small>
                         ` : `
-                            <select name="deviceId" id="formDeviceSelect" class="select2-search" required>
+                            <select name="deviceId" id="formDeviceSelect" class="select2-search">
                                 <option value="">Selecione um dispositivo</option>
                                 ${dispositivos.map(d => `
                                     <option value="${d.id}">
@@ -3195,7 +3129,7 @@ App.prototype.loadRelatorios = async function () {
 
             <!-- Filtros Hierárquicos (Setor > Sala) -->
             <div class="filter-section" id="filtrosHierarquicos">
-                <h3 class="filter-title">Filtros Hierárquicos</h3>
+                <h3 class="filter-title">Filtros</h3>
                 <div class="filter-row">
                     <div class="filter-group" id="filtroSetorContainer">
                         <label>Setor</label>
@@ -3470,65 +3404,61 @@ App.prototype.renderRelatorioCharts = async function () {
     const dataInicio = document.getElementById("dataInicio").value;
     const dataFim = document.getElementById("dataFim").value;
 
-    // ADICIONADO: Verificar se um período foi selecionado
+    // Função auxiliar para mostrar mensagem e ocultar canvas
+    const mostrarMensagem = (canvas, mensagem, texto) => {
+        canvas.style.display = "none";
+        mensagem.style.display = "flex";
+        mensagem.textContent = texto;
+    };
+
+    // Função auxiliar para mostrar canvas e ocultar mensagem
+    const mostrarCanvas = (canvas, mensagem) => {
+        canvas.style.display = "block";
+        mensagem.style.display = "none";
+    };
+
+    // Função auxiliar para destruir gráficos de forma segura
+    const destruirGraficos = () => {
+        if (this.chartEvolucao) {
+            this.chartEvolucao.destroy();
+            this.chartEvolucao = null;
+        }
+        if (this.chartRateio) {
+            this.chartRateio.destroy();
+            this.chartRateio = null;
+        }
+    };
+
+    // Verificar se um período foi selecionado
     if (!this.periodoSelecionado) {
-        if (this.chartEvolucao) this.chartEvolucao.destroy();
-        if (this.chartRateio) this.chartRateio.destroy();
-        
-        msgEvolucao.textContent = "Selecione um período para visualizar os dados.";
-        msgRateio.textContent = "Selecione um período para visualizar os dados.";
-        msgEvolucao.style.display = "flex";
-        msgRateio.style.display = "flex";
-        canvasEvolucao.style.display = "none";
-        canvasRateio.style.display = "none";
-        this.renderTabelaDados([]);
+        destruirGraficos();
+        mostrarMensagem(canvasEvolucao, msgEvolucao, "Selecione um período para visualizar os dados.");
+        mostrarMensagem(canvasRateio, msgRateio, "Selecione um período para visualizar os dados.");
         return;
     }
 
     if (!dataInicio || !dataFim) {
-        console.warn("Datas não definidas");
         return;
     }
     
-    // ADICIONADO: Verificar se precisa selecionar Setor (para Sala)
+    // Verificar se precisa selecionar Setor (para Sala)
     if (tipo === "evolucao-sala" && !this.filtroSetorAtual) {
-        if (this.chartEvolucao) this.chartEvolucao.destroy();
-        if (this.chartRateio) this.chartRateio.destroy();
-        
-        msgEvolucao.textContent = "Selecione um Setor para visualizar a evolução por Sala.";
-        msgRateio.textContent = "Selecione um Setor para visualizar o rateio por Sala.";
-        msgEvolucao.style.display = "flex";
-        msgRateio.style.display = "flex";
-        canvasEvolucao.style.display = "none";
-        canvasRateio.style.display = "none";
-        this.renderTabelaDados([]);
+        destruirGraficos();
+        mostrarMensagem(canvasEvolucao, msgEvolucao, "Selecione um Setor para visualizar a evolução por Sala.");
+        mostrarMensagem(canvasRateio, msgRateio, "Selecione um Setor para visualizar o rateio por Sala.");
         return;
     }
     
-    // MODIFICADO: Lógica de exibição condicional para Evolução por Vínculo
+    // Verificar se precisa selecionar Sala (para Vínculo)
     if (tipo === "evolucao-vinculo" && !this.filtroSalaAtual) {
-        if (this.chartEvolucao) this.chartEvolucao.destroy();
-        if (this.chartRateio) this.chartRateio.destroy();
-        
-        msgEvolucao.textContent = "Selecione uma Sala para visualizar a evolução por Vínculo.";
-        msgRateio.textContent = "Selecione uma Sala para visualizar o rateio por Vínculo.";
-        msgEvolucao.style.display = "flex";
-        msgRateio.style.display = "flex";
-        canvasEvolucao.style.display = "none";
-        canvasRateio.style.display = "none";
-        this.renderTabelaDados([]);
+        destruirGraficos();
+        mostrarMensagem(canvasEvolucao, msgEvolucao, "Selecione uma Sala para visualizar a evolução por Vínculo.");
+        mostrarMensagem(canvasRateio, msgRateio, "Selecione uma Sala para visualizar o rateio por Vínculo.");
         return;
     }
 
-    // Destruir gráficos anteriores
-    if (this.chartEvolucao) this.chartEvolucao.destroy();
-    if (this.chartRateio) this.chartRateio.destroy();
-    
-    // Ocultar mensagens e mostrar canvas
-    msgEvolucao.style.display = "none";
-    msgRateio.style.display = "none";
-    canvasEvolucao.style.display = "block";
-    canvasRateio.style.display = "block";
+    // Destruir gráficos anteriores SEMPRE antes de buscar novos dados
+    destruirGraficos();
 
     // Buscar dados de AMBOS os endpoints em paralelo
     try {
@@ -3537,35 +3467,72 @@ App.prototype.renderRelatorioCharts = async function () {
             this.buscarDadosConsumptionRatio(tipo, dataInicio, dataFim)
         ]);
 
+        // Verificar se houve erro na API
         if (!dadosEvolucao || !dadosRateio) {
             console.error("Nenhum dado retornado da API");
-            this.renderTabelaDados([]);
+            mostrarMensagem(canvasEvolucao, msgEvolucao, "Erro ao carregar dados. Tente novamente.");
+            mostrarMensagem(canvasRateio, msgRateio, "Erro ao carregar dados. Tente novamente.");
             return;
         }
+
+        // Verificar se há dados no gráfico de evolução
+        const temDadosEvolucao = dadosEvolucao.data && 
+                                 dadosEvolucao.data.datasets && 
+                                 dadosEvolucao.data.datasets.length > 0 &&
+                                 dadosEvolucao.data.datasets.some(ds => ds.data && ds.data.length > 0);
+
+        // Verificar se há dados no gráfico de rateio
+        const temDadosRateio = dadosRateio.data && 
+                               dadosRateio.data.datasets && 
+                               dadosRateio.data.datasets.length > 0 &&
+                               dadosRateio.data.datasets.some(ds => ds.data && ds.data.length > 0 && ds.data.some(v => v > 0));
 
         // Atualizar títulos
         document.getElementById("chartTitleEvolucao").textContent = dadosEvolucao.titulo;
         document.getElementById("chartTitleRateio").textContent = dadosRateio.titulo;
 
-        // Criar gráfico de evolução (linha)
-        this.chartEvolucao = new Chart(canvasEvolucao, {
-            type: "line",
-            data: dadosEvolucao.data,
-            options: dadosEvolucao.options
-        });
+        // Renderizar ou mostrar mensagem para EVOLUÇÃO
+        if (temDadosEvolucao) {
+            mostrarCanvas(canvasEvolucao, msgEvolucao);
+            
+            // Garantir que não há gráfico anterior neste canvas
+            if (this.chartEvolucao) {
+                this.chartEvolucao.destroy();
+                this.chartEvolucao = null;
+            }
+            
+            this.chartEvolucao = new Chart(canvasEvolucao, {
+                type: "line",
+                data: dadosEvolucao.data,
+                options: dadosEvolucao.options
+            });
+        } else {
+            mostrarMensagem(canvasEvolucao, msgEvolucao, "Não há dados disponíveis para o período selecionado.");
+        }
 
-        // Criar gráfico de rateio (doughnut)
-        this.chartRateio = new Chart(canvasRateio, {
-            type: "doughnut",
-            data: dadosRateio.data,
-            options: dadosRateio.options
-        });
+        // Renderizar ou mostrar mensagem para RATEIO
+        if (temDadosRateio) {
+            mostrarCanvas(canvasRateio, msgRateio);
+            
+            // Garantir que não há gráfico anterior neste canvas
+            if (this.chartRateio) {
+                this.chartRateio.destroy();
+                this.chartRateio = null;
+            }
+            
+            this.chartRateio = new Chart(canvasRateio, {
+                type: "doughnut",
+                data: dadosRateio.data,
+                options: dadosRateio.options
+            });
+        } else {
+            mostrarMensagem(canvasRateio, msgRateio, "Não há dados disponíveis para o período selecionado.");
+        }
 
-        // Atualizar tabela (usando dados de evolução)
-        this.renderTabelaDados(dadosEvolucao.tabelaDados);
     } catch (error) {
         console.error("Erro ao renderizar gráficos:", error);
-        this.renderTabelaDados([]);
+        mostrarMensagem(canvasEvolucao, msgEvolucao, "Erro ao carregar dados. Tente novamente.");
+        mostrarMensagem(canvasRateio, msgRateio, "Erro ao carregar dados. Tente novamente.");
     }
 };
 
@@ -3696,7 +3663,6 @@ App.prototype.buscarDadosConsumptionRatio = async function (tipo, dataInicio, da
 // Processar dados retornados da API /consumption/evolution
 App.prototype.processarDadosConsumptionEvolution = function (apiResponse, titulo) {
     if (!apiResponse || !apiResponse.series || apiResponse.series.length === 0) {
-        console.warn("Nenhuma série de dados retornada para Evolução");
         return { titulo, data: { labels: [], datasets: [] }, options: {}, tabelaDados: [] };
     }
 
@@ -3796,7 +3762,6 @@ App.prototype.processarDadosConsumptionEvolution = function (apiResponse, titulo
 // Processar dados retornados da API /consumption/ratio
 App.prototype.processarDadosConsumptionRatio = function (apiResponse, titulo) {
     if (!apiResponse || !apiResponse.data || apiResponse.data.length === 0) {
-        console.warn("Nenhum dado de rateio retornado");
         return { titulo, data: { labels: [], datasets: [] }, options: {} };
     }
 
@@ -3843,42 +3808,6 @@ App.prototype.processarDadosConsumptionRatio = function (apiResponse, titulo) {
         },
         totalConsumption: apiResponse.totalConsumption / 1000 // kW
     };
-};
-
-// Renderizar tabela de dados
-App.prototype.renderTabelaDados = function (dados) {
-    const container = document.getElementById("tabelaDados");
-    if (!container || !dados || dados.length === 0) {
-        container.innerHTML = "<p style=\"text-align: center; padding: 20px;\">Nenhum dado disponível</p>";
-        return;
-    }
-
-    container.innerHTML = `
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th>Nome</th>
-                    <th>Total (kW)</th>
-                    <th>Média (kW)</th>
-                    <th>Máximo (kW)</th>
-                    <th>Mínimo (kW)</th>
-                    <th>Leituras</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${dados.map(item => `
-                    <tr>
-                        <td><strong>${item.nome}</strong></td>
-                        <td>${item.total}</td>
-                        <td>${item.media}</td>
-                        <td>${item.max}</td>
-                        <td>${item.min}</td>
-                        <td>${item.leituras || "-"}</td>
-                    </tr>
-                `).join("")}
-            </tbody>
-        </table>
-    `;
 };
 // ===== ABA DE CONSUMO COM 3 GRÁFICOS =====
 
@@ -4083,9 +4012,6 @@ App.prototype.renderConsumoCharts = function () {
     if (this.chartTensao) this.chartTensao.destroy();
     if (this.chartCorrente) this.chartCorrente.destroy();
     if (this.chartPotencia) this.chartPotencia.destroy();
-
-    // Gerar labels baseado no período
-    const labels = this.getLabelsParaPeriodo(this.periodoConsumo);
 
     // Gerar dados para cada gráfico
     const dadosTensao = this.gerarDadosAleatorios(labels.length, 210, 230);
