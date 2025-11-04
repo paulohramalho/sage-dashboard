@@ -2532,7 +2532,7 @@ class App {
                     <div class="table-container">
                         <div class="table-header">
                             <h3>Lista de Vínculos (Dispositivos em Salas)</h3>
-                            <div class="table-search" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                            <div class="table-search">
                                 <select id="filterDepartmentVinculo" class="select2-search" style="min-width: 200px;">
                                     <option value="">Todos os setores</option>
                                     ${setores.map(s => `
