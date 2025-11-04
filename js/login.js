@@ -192,6 +192,12 @@ document.getElementById('login-form').addEventListener('submit', async function 
     const email = document.getElementById('login-email').value;
     const password = document.getElementById('login-password').value;
 
+    if(email == "" || password == ""){
+        btn.classList.remove('btn-loading');
+        displayMessage('error', 'Preencha os campos e tente novamente.'); 
+        return
+    }
+
     try {
         const response = await fetch(API_URL + '/login', {
             method: 'POST',
@@ -199,7 +205,11 @@ document.getElementById('login-form').addEventListener('submit', async function 
             body: JSON.stringify({ email, password })
         });
 
-        const data = await response.json();
+        try {
+            data = await response.json();
+        } catch {
+            data = {};
+        }
 
         if (response.ok) {
             const token = data.token;
@@ -208,10 +218,8 @@ document.getElementById('login-form').addEventListener('submit', async function 
             const payload = decodeJwt(token);
             if (payload && payload.ROLE) {
                 USER_ROLE = payload.ROLE;
-                console.log("Usuário logado. ROLE:", USER_ROLE);
             }
 
-            displayMessage('success', 'Login realizado com sucesso!');
             setTimeout(() => {
                 window.location.href = '/';
             }, 1500);
@@ -219,12 +227,11 @@ document.getElementById('login-form').addEventListener('submit', async function 
             if (response.status === 401) {
                 displayMessage('error', "Usuário e/ou senha inválidos. Tente novamente.");
             } else {
-                displayMessage('error', data.message || 'Erro ao fazer login.');
+                displayMessage('error', 'Erro ao fazer login.');
             }
         }
     } catch (error) {
-        console.error('Erro na requisição de login (rede/execução):', error);
-        displayMessage('error', 'Não foi possível conectar ao servidor. Verifique sua conexão.');
+        displayMessage('error', "Usuário e/ou senha inválidos. Tente novamente.");
     } finally {
         btn.classList.remove('btn-loading');
     }
@@ -332,3 +339,5 @@ document.getElementById('back-to-login').addEventListener('click', function (eve
     document.getElementById('login-card').classList.remove('hidden');
     document.querySelector('.container').classList.remove('expanded');
 });
+
+window.USER_ROLE = USER_ROLE
