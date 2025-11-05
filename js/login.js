@@ -192,9 +192,9 @@ document.getElementById('login-form').addEventListener('submit', async function 
     const email = document.getElementById('login-email').value;
     const password = document.getElementById('login-password').value;
 
-    if(email == "" || password == ""){
+    if (email == "" || password == "") {
         btn.classList.remove('btn-loading');
-        displayMessage('error', 'Preencha os campos e tente novamente.'); 
+        displayMessage('error', 'Preencha os campos e tente novamente.');
         return
     }
 
@@ -261,33 +261,35 @@ document.getElementById('register-form').addEventListener('submit', async functi
         adminPassword: form.adminPassword.value
     };
 
-    try {
-        const response = await fetch(API_URL + '/company', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(formData)
-        });
+    const response = await fetch(API_URL + '/company', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+    });
 
-        const data = await response.json();
+    let data = {};
 
-        if (response.ok) {
-            displayMessage('success', 'Cadastro realizado! Faça login para continuar.');
-            form.reset();
-            updateStep(1);
-            setTimeout(() => {
-                document.getElementById('register-card').classList.add('hidden');
-                document.getElementById('login-card').classList.remove('hidden');
-                document.querySelector('.container').classList.remove('expanded');
-            }, 2000);
-        } else {
-            displayMessage('error', data.message || 'Erro ao realizar cadastro.');
-        }
-    } catch (error) {
-        console.error('Erro na requisição de cadastro:', error);
-        displayMessage('error', 'Não foi possível conectar ao servidor.');
-    } finally {
-        btn.classList.remove('btn-loading');
+    try{
+        data = await response.json();
+    }catch{
+
     }
+
+    if (response.ok) {
+        displayMessage('success', 'Cadastro realizado! Faça login para continuar.');
+        form.reset();
+        updateStep(1);
+        setTimeout(() => {
+            document.getElementById('register-card').classList.add('hidden');
+            document.getElementById('login-card').classList.remove('hidden');
+            document.querySelector('.container').classList.remove('expanded');
+        }, 2000);
+    } else {
+        console.log(data);
+        displayMessage( 'Erro ao realizar cadastro.');
+    }
+
+    btn.classList.remove('btn-loading');
 });
 
 // Função para buscar endereço pelo CEP
