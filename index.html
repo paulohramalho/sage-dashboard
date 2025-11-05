@@ -1,109 +1,171 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SAGE - Sistema de Análise e Gerenciamento Energético</title>
-    <!-- Select2 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 
-    <!-- jQuery (necessário para o Select2) -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css"
+        integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
 
-    <!-- Select2 JS -->
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/sidebar.css">
-    <link rel="stylesheet" href="css/forms.css">
-    <link rel="stylesheet" href="css/tables.css">
-    <link rel="stylesheet" href="css/charts.css">
-    <link rel="stylesheet" href="css/error-box.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Estilos -->
+    <link rel="stylesheet" href="/landing/css/style.css">
+    <link rel="stylesheet" href="/landing/css/navbar.css">
+    <link rel="stylesheet" href="/landing/css/results.css">
+    <link rel="stylesheet" href="/landing/css/stylesOdsButton.css">
+
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
+
 <body>
-    <script>
-        function isUserLogged() {
-            const name = 'USER_TOKEN=';
-            const decodedCookie = decodeURIComponent(document.cookie);
-            const ca = decodedCookie.split(';');
-            for(let i = 0; i <ca.length; i++) {
-                let c = ca[i];
-                while (c.charAt(0) == ' ') {
-                    c = c.substring(1);
-                }
-                if (c.indexOf(name) == 0) {
-                    return true; 
-                }
-            }
-            return false;
-        }
+    <!-- Botão ODS 7 Flutuante -->
+    <div id="ods-floating-button" class="ods-floating-btn">
+        <img src="src/images/ODS-7.png" alt="ODS 7" title="Energia Acessível e Limpa">
+        <span class="ods-tooltip">ODS 7 - Energia Limpa</span>
+    </div>
 
-        if(!isUserLogged()) window.location = "/login"
-    </script>
-    <div class="dashboard-container">
-        <!-- Sidebar -->
-        <aside class="sidebar" id="sidebar">
-            <div class="sidebar-header">
-                <div class="logo">
-                    <div class="logo-icon"><i class="fas fa-bolt"></i></div>
-                    <span class="logo-text">SAGE</span>
-                </div>
-                <button class="toggle-sidebar" id="toggleSidebar">☰</button>
-            </div>
+    <header>
+        <div class="header-container">
+            <a href="#home" class="logo">SAGE</a>
 
-            <nav class="sidebar-nav">
-                <ul>
-                    <li><a href="index.html" class="nav-link active" data-page="dashboard"><i class="fas fa-chart-line"></i> <span>Dashboard</span></a></li>
-                    <li><a href="#setores" class="nav-link" data-page="setores"><i class="fas fa-cogs"></i> <span>Setores</span></a></li>
-                    <li><a href="#salas" class="nav-link" data-page="salas"><i class="fas fa-door-open"></i> <span>Salas</span></a></li>
-                    <li><a href="#tipos-dispositivos" class="nav-link" data-page="tipos-dispositivos"><i class="fas fa-tags"></i> <span>Tipos de Dispositivos</span></a></li>
-                    <li><a href="#dispositivos" class="nav-link" data-page="dispositivos"><i class="fas fa-plug"></i> <span>Dispositivos</span></a></li>
-                    <li><a href="#vinculos" class="nav-link" data-page="vinculos"><i class="fas fa-link"></i> <span>Vínculos de Dispositivos</span></a></li>
-                    <li><a href="#consumo" class="nav-link" data-page="consumo"><i class="fas fa-chart-bar"></i> <span>Consumo</span></a></li>
-                    <li><a href="#relatorios" class="nav-link" data-page="relatorios"><i class="fas fa-file-alt"></i> <span>Relatórios</span></a></li>
-                    <li><a href="#usuarios" class="nav-link" data-page="usuarios"><i class="fas fa-users"></i> <span>Usuários</span></a></li>
+            <button class="mobile-menu-toggle" id="mobileMenuToggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+
+            <nav class="navbar" id="navbar">
+                <div class="nav-overlay" id="navOverlay"></div>
+                <ul class="nav-menu" id="navMenu">
+                    <li><a href="#home">Início</a></li>
+                    <li><a href="#sistema">Sistema</a></li>
+                    <li><a href="#resultados">Resultados</a></li>
+                    <li><a href="#impacto">Impacto</a></li>
+                    <li><a href="saibaMais.html">Saiba Mais</a></li>
+                    <li><a href="/login">Login</a></li>
                 </ul>
             </nav>
+        </div>
+    </header>
 
-            <div class="sidebar-footer">
-                <button class="logout-btn"><i class="fas fa-sign-out-alt"></i> <span>Sair</span></button>
-            </div>
-        </aside>
-
-        <!-- Main Content -->
-        <main class="main-content">
-            <!-- Header -->
-            <header class="header">
-                <div class="header-right">
-                    <div class="user-profile">
-                        <div class="avatar">U</div>
-                        <span>Usuário</span>
+    <main>
+        <section id="home">
+            <div id="banner">
+                <div id="banner-content">
+                    <div class="banner-text">
+                        <h1><span>S</span>istema de <span>A</span>nálise e <span>G</span>erenciamento
+                            <span>E</span>nergético
+                        </h1>
+                        <p>Monitore, analise e otimize o consumo energético da sua empresa com nossa plataforma
+                            inteligente. Reduza custos e promova sustentabilidade através de dados precisos.</p>
+                        <a href="#sistema" class="btn-primary">Conheça nossa solução</a>
                     </div>
                 </div>
-            </header>
+            </div>
+        </section>
 
-            <!-- Content Area -->
-            <div class="content-area">
-                <div id="page-content">
-                    <!-- Conteúdo dinâmico será carregado aqui -->
+        <section id="sistema">
+            <div class="container">
+                <div id="solution-text-container">
+                    <h2>Nossa Solução</h2>
+                    <p>Uma plataforma web completa para análise e gerenciamento do consumo energético empresarial. Nosso
+                        sistema permite o cadastro da estrutura organizacional, registro de contas de luz, monitoramento
+                        detalhado por dispositivo e geração de relatórios estratégicos.</p>
+                    <p>Com dashboards interativos e análises de rateio, sua empresa poderá identificar pontos críticos
+                        de
+                        consumo, reduzir custos operacionais e implementar estratégias eficazes para maior eficiência
+                        energética e sustentabilidade.</p>
+                </div>
+                <div id="solution-image-container">
+                    <img id="solution-image" src="/landing/images/system-image.png" alt="Sistema SAGE">
                 </div>
             </div>
-        </main>
-    </div>
+        </section>
 
-    <!-- Modal para formulários -->
-    <div class="modal" id="formModal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <div id="modal-form"></div>
-        </div>
-    </div>
+        <section id="resultados">
+            <div class="results-wrapper">
+                <div class="solution-text-container">
+                    <h2>Resultados Comprovados</h2>
+                    <p>Veja como empresas reais transformaram sua gestão energética com o SAGE</p>
+                </div>
 
-    <script src="js/pagination.js"></script>
-    <script src="js/sidebar.js"></script>
-    <script src="js/config.js"></script>
-    <script src="js/handler.js"></script>
-    <script src="js/app.js"></script>
+                <div class="results-grid">
+                    <!-- Gráfico de Linhas - Evolução do Custo Mensal -->
+                    <div class="result-card result-card-large">
+                        <div class="result-card-header">
+                            <h3>Evolução do Custo Mensal</h3>
+                            <p class="result-subtitle">Comparativo antes e depois do SAGE</p>
+                        </div>
+                        <div class="result-canvas-container">
+                            <canvas id="evolutionChart"></canvas>
+                        </div>
+                        <div class="result-highlight">
+                            <i class="fas fa-chart-line"></i>
+                            <span>Redução média de <strong>18% nos custos</strong> em 6 meses</span>
+                        </div>
+                    </div>
+
+                    <!-- Gráfico de Barras - Economia por Setor -->
+                    <div class="result-card">
+                        <div class="result-card-header">
+                            <h3>Economia por Setor</h3>
+                            <p class="result-subtitle">Após implementação do SAGE</p>
+                        </div>
+                        <div class="result-canvas-container">
+                            <canvas id="savingsChart"></canvas>
+                        </div>
+                        <div class="result-highlight">
+                            <i class="fas fa-piggy-bank"></i>
+                            <span>Economia total de <strong>R$ 2.847/mês</strong></span>
+                        </div>
+                    </div>
+
+                    <!-- Gráfico de Rosca - Distribuição da Redução -->
+                    <div class="result-card">
+                        <div class="result-card-header">
+                            <h3>Origem da Economia</h3>
+                            <p class="result-subtitle">Principais fontes de redução</p>
+                        </div>
+                        <div class="result-canvas-container">
+                            <canvas id="reductionChart"></canvas>
+                        </div>
+                        <div class="result-highlight">
+                            <i class="fas fa-lightbulb"></i>
+                            <span><strong>42% da economia</strong> vem da otimização de ar-condicionado</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="impacto">
+            <div class="impact-content">
+                <h2>Impacto Sustentável</h2>
+                <p>Nosso sistema contribui diretamente para a sustentabilidade empresarial e ambiental. Ao fornecer
+                    análises detalhadas do consumo energético, capacitamos gestores a identificar desperdícios, reduzir
+                    custos operacionais e implementar práticas mais eficientes.</p>
+                <p>Com o controle inteligente da energia, sua empresa não apenas economiza recursos financeiros, mas
+                    também reduz significativamente seu impacto ambiental, contribuindo para um futuro mais sustentável.
+                </p>
+                <button class="ods-badge-btn" onclick="window.open('https://brasil.un.org/pt-br/sdgs/7', '_blank')">
+                    Alinhado com ODS 7 - Energia Acessível e Limpa
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        &copy; <b><a href=".">SAGE</a></b> - Sistema de Análise e Gerenciamento Energético
+    </footer>
+
+    <script src="landing/js/index.js"></script>
+    <script src="landing/js/odsFloating.js"></script>
+    <script src="landing/js/indexCharts.js"></script>
+    <script src="landing/js/resultsCharts.js"></script>
 </body>
+
 </html>

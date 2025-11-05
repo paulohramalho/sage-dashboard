@@ -27,9 +27,14 @@
             return false;
         }
 
-        if (isUserLogged()) window.location = '/'
+        if (isUserLogged()) window.location = '/dashboard'
     </script>
     <div class="container">
+        <a href="#" class="back-button" onclick="window.location = '/'" return false;">
+            <i class="fa-solid fa-arrow-left"></i>
+            Voltar
+        </a>
+
         <!-- Login Card -->
         <div class="card" id="login-card">
             <h2>SAGE</h2>

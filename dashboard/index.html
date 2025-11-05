@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAGE - Sistema de Análise e Gerenciamento Energético</title>
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+    <!-- jQuery (necessário para o Select2) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- Select2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/sidebar.css">
+    <link rel="stylesheet" href="/css/forms.css">
+    <link rel="stylesheet" href="/css/tables.css">
+    <link rel="stylesheet" href="/css/charts.css">
+    <link rel="stylesheet" href="/css/error-box.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <script>
+        function isUserLogged() {
+            const name = 'USER_TOKEN=';
+            const decodedCookie = decodeURIComponent(document.cookie);
+            const ca = decodedCookie.split(';');
+            for(let i = 0; i <ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) == ' ') {
+                    c = c.substring(1);
+                }
+                if (c.indexOf(name) == 0) {
+                    return true; 
+                }
+            }
+            return false;
+        }
+
+        if(!isUserLogged()) window.location = "/login"
+    </script>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <div class="logo-icon"><i class="fas fa-bolt"></i></div>
+                    <span class="logo-text">SAGE</span>
+                </div>
+                <button class="toggle-sidebar" id="toggleSidebar">☰</button>
+            </div>
+
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="index.html" class="nav-link active" data-page="dashboard"><i class="fas fa-chart-line"></i> <span>Dashboard</span></a></li>
+                    <li><a href="#setores" class="nav-link" data-page="setores"><i class="fas fa-cogs"></i> <span>Setores</span></a></li>
+                    <li><a href="#salas" class="nav-link" data-page="salas"><i class="fas fa-door-open"></i> <span>Salas</span></a></li>
+                    <li><a href="#tipos-dispositivos" class="nav-link" data-page="tipos-dispositivos"><i class="fas fa-tags"></i> <span>Tipos de Dispositivos</span></a></li>
+                    <li><a href="#dispositivos" class="nav-link" data-page="dispositivos"><i class="fas fa-plug"></i> <span>Dispositivos</span></a></li>
+                    <li><a href="#vinculos" class="nav-link" data-page="vinculos"><i class="fas fa-link"></i> <span>Vínculos de Dispositivos</span></a></li>
+                    <li><a href="#consumo" class="nav-link" data-page="consumo"><i class="fas fa-chart-bar"></i> <span>Consumo</span></a></li>
+                    <li><a href="#relatorios" class="nav-link" data-page="relatorios"><i class="fas fa-file-alt"></i> <span>Relatórios</span></a></li>
+                    <li><a href="#usuarios" class="nav-link" data-page="usuarios"><i class="fas fa-users"></i> <span>Usuários</span></a></li>
+                </ul>
+            </nav>
+
+            <div class="sidebar-footer">
+                <button class="logout-btn"><i class="fas fa-sign-out-alt"></i> <span>Sair</span></button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <div class="header-right">
+                    <div class="user-profile">
+                        <div class="avatar">U</div>
+                        <span>Usuário</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Content Area -->
+            <div class="content-area">
+                <div id="page-content">
+                    <!-- Conteúdo dinâmico será carregado aqui -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal para formulários -->
+    <div class="modal" id="formModal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div id="modal-form"></div>
+        </div>
+    </div>
+
+    <script src="/js/pagination.js"></script>
+    <script src="/js/sidebar.js"></script>
+    <script src="/js/config.js"></script>
+    <script src="/js/handler.js"></script>
+    <script src="/js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,260 @@
+header {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 90%;
+    max-width: 1100px;
+    padding: 15px 30px;
+    border-radius: var(--radius);
+    background: #000000;
+    z-index: 1000;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+    border: none;
+}
+
+/* Ajuste para páginas com botão de voltar */
+body.has-back-button header {
+    left: calc(50% + 70px);
+    width: calc(90% - 140px);
+    max-width: calc(1100px - 140px);
+}
+
+.header-container {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.logo {
+    color: var(--color-primary);
+    font-size: 1.5rem;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.navbar {
+    flex: 1;
+    display: flex;
+    justify-content: flex-end;
+    margin-left: 0;
+}
+
+.navbar ul {
+    list-style: none;
+    display: flex;
+    gap: 30px;
+    margin: 0;
+    padding: 0;
+}
+
+.navbar li a {
+    color: var(--color-primary);
+    text-decoration: none;
+    font-size: 1rem;
+    font-weight: 500;
+    padding: 8px 12px;
+    transition: all var(--transition);
+    border-radius: 4px;
+}
+
+.navbar li a:hover {
+    background: rgba(255, 183, 3, 0.1);
+}
+
+/* Botão hambúrguer */
+.mobile-menu-toggle {
+    display: none;
+    flex-direction: column;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 8px;
+    border-radius: 4px;
+    transition: all var(--transition);
+}
+
+.mobile-menu-toggle span {
+    width: 25px;
+    height: 3px;
+    background: var(--color-primary);
+    margin: 3px 0;
+    transition: all 0.3s ease;
+    border-radius: 2px;
+}
+
+/* Animação do botão quando ativo */
+.mobile-menu-toggle.active span:nth-child(1) {
+    transform: rotate(45deg) translate(6px, 6px);
+}
+
+.mobile-menu-toggle.active span:nth-child(2) {
+    opacity: 0;
+}
+
+.mobile-menu-toggle.active span:nth-child(3) {
+    transform: rotate(-45deg) translate(6px, -6px);
+}
+
+/* Overlay para mobile */
+.nav-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    backdrop-filter: blur(2px);
+}
+
+/* Estilo para navbar ao rolar (adicionado via JS) */
+header.scrolled {
+    background: #000000;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    top: 0;
+    width: 100%;
+    border-radius: 0;
+    padding: 10px 30px;
+}
+
+/* Media query para responsividade */
+@media (max-width: 768px) {
+
+    /* Header em mobile */
+    header {
+        width: 95%;
+        padding: 12px 20px;
+    }
+
+    /* Ajuste para páginas com botão de voltar em mobile */
+    body.has-back-button header {
+        left: calc(50% + 60px);
+        width: calc(95% - 120px);
+        max-width: calc(1100px - 120px);
+    }
+
+    /* Mostrar botão hambúrguer */
+    .mobile-menu-toggle {
+        display: flex;
+        z-index: 1002;
+    }
+
+    .navbar {
+        margin-left: 0;
+    }
+
+    /* Esconder navbar padrão em mobile */
+    .navbar {
+        position: fixed;
+        top: 0;
+        right: -100%;
+        width: 280px;
+        height: 100vh;
+        background: #000000;
+        transition: right 0.3s ease;
+        z-index: 1001;
+        border-left: 1px solid rgba(255, 183, 3, 0.2);
+    }
+
+    /* Navbar ativa em mobile */
+    .navbar.active {
+        right: 0;
+    }
+
+    /* Mostrar overlay quando menu ativo */
+    .navbar.active .nav-overlay {
+        display: block;
+    }
+
+    /* Menu vertical em mobile */
+    .nav-menu {
+        flex-direction: column;
+        padding: 80px 0 20px;
+        height: 100%;
+        justify-content: flex-end;
+        align-items: flex-start;
+        gap: 0;
+        margin: 0;
+    }
+
+    /* Links em mobile */
+    .navbar li {
+        width: 100%;
+        border-bottom: 1px solid rgba(255, 183, 3, 0.1);
+        opacity: 0;
+        transform: translateX(20px);
+        animation: slideInRight 0.3s ease forwards;
+    }
+
+    .navbar li a {
+        display: block;
+        padding: 20px 30px;
+        font-size: 1.1rem;
+        width: 100%;
+        transition: all var(--transition);
+    }
+
+    .navbar li a:hover {
+        background: rgba(255, 183, 3, 0.1);
+        color: var(--color-primary);
+        padding-left: 35px;
+    }
+
+    /* Animação de entrada dos itens */
+    .navbar li:nth-child(1) {
+        animation-delay: 0.1s;
+    }
+
+    .navbar li:nth-child(2) {
+        animation-delay: 0.2s;
+    }
+
+    .navbar li:nth-child(3) {
+        animation-delay: 0.3s;
+    }
+
+    .navbar li:nth-child(4) {
+        animation-delay: 0.4s;
+    }
+
+    .navbar li:nth-child(5) {
+        animation-delay: 0.5s;
+    }
+
+    .navbar li:nth-child(6) {
+        animation-delay: 0.6s;
+    }
+
+    .navbar li:nth-child(7) {
+        animation-delay: 0.7s;
+    }
+}
+
+@media (max-width: 480px) {
+
+    /* Ajuste extra para telas muito pequenas */
+    body.has-back-button header {
+        left: calc(50% + 50px);
+        width: calc(90% - 100px);
+        max-width: calc(1100px - 100px);
+        padding: 10px 15px;
+    }
+
+    .logo {
+        font-size: 1.3rem;
+    }
+}
+
+/* Animação de entrada dos itens */
+@keyframes slideInRight {
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
