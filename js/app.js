@@ -3166,10 +3166,10 @@ App.prototype.loadRelatorios = async function () {
                         <i class="fas fa-calendar-day"></i> Hoje
                     </button>
                     <button class="btn btn-outline" onclick="app.aplicarPeriodoSemana()">
-                        <i class="fas fa-calendar-week"></i> Semana
+                        <i class="fas fa-calendar-week"></i> 7 últimos dias
                     </button>
                     <button class="btn btn-outline" onclick="app.aplicarPeriodoMes()">
-                        <i class="fas fa-calendar-alt"></i> Mês
+                        <i class="fas fa-calendar-alt"></i> 30 últimos dias
                     </button>
                 </div>
                 <div class="filter-row">
@@ -3310,6 +3310,18 @@ App.prototype.handleSalaChange = function() {
 App.prototype.limparFiltrosHierarquicos = function () {
     $("#filtroSetor").val(null).trigger("change");
     this.updateFiltroSalaRelatorio(); // Isso vai resetar a sala e renderizar os gráficos
+};
+
+App.prototype.aplicarPeriodoHoje = function () {
+    const agora = new Date();
+    const ontem = new Date(agora);
+    ontem.setDate(ontem.getDate() - 1);
+    
+    document.getElementById("dataInicio").value = this.formatDateTimeLocal(ontem);
+    document.getElementById("dataFim").value = this.formatDateTimeLocal(agora);
+    
+    this.periodoSelecionado = true;
+    this.renderRelatorioCharts();
 };
 
 App.prototype.aplicarPeriodoSemana = function () {
@@ -3813,22 +3825,51 @@ App.prototype.processarDadosConsumptionRatio = function (apiResponse, titulo) {
 };
 // ===== ABA DE CONSUMO COM 3 GRÁFICOS =====
 
-App.prototype.loadConsumo = function () {
+App.prototype.loadConsumo = async function () {
     const content = document.getElementById('page-content');
+    
+    // Buscar setores da API
+    let setores = [];
+    try {
+        const setoresResponse = await callApi("/department?page=0&size=1000", { method: "GET" });
+        setores = setoresResponse.content || [];
+    } catch (error) {
+        console.error("Erro ao carregar setores:", error);
+    }
+
     content.innerHTML = `
         <div class="consumo-page">
             <h2>Monitoramento de Consumo Detalhado</h2>
 
-            <!-- Filtros -->
+            <!-- Filtros Hierárquicos (Setor > Sala > Dispositivo) -->
             <div class="filter-section">
-                <h3 class="filter-title">Filtros</h3>
+                <h3 class="filter-title">Filtros Hierárquicos</h3>
                 <div class="filter-row">
                     <div class="filter-group">
-                        <label>Dispositivo (Vínculo)</label>
-                        <select id="filtroDispositivo" onchange="app.updateConsumoCharts()">
-                            <option value="">Todos os Dispositivos</option>
-                            ${this.data.vinculos.map(v => `<option value="${v.id}">${v.apelido} (${v.sala})</option>`).join('')}
+                        <label>Setor</label>
+                        <select id="filtroSetorConsumo" onchange="app.updateFiltroSalaConsumo()">
+                            <option value="">Todos os Setores</option>
+                            ${setores.map(s => `
+                                <option value="${s.id}">${s.name}</option>
+                            `).join('')}
                         </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Sala</label>
+                        <select id="filtroSalaConsumo" disabled onchange="app.updateFiltroDispositivoConsumo()">
+                            <option value="">Selecione uma sala</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Dispositivo (Vínculo)</label>
+                        <select id="filtroDispositivo" disabled onchange="app.updateConsumoCharts()">
+                            <option value="">Selecione um dispositivo</option>
+                        </select>
+                    </div>
+                    <div class="filter-group" style="display: flex; align-items: flex-end;">
+                        <button class="btn btn-outline" onclick="app.limparFiltrosConsumo()">
+                            <i class="fas fa-times"></i> Limpar Filtros
+                        </button>
                     </div>
                 </div>
             </div>
@@ -3836,23 +3877,24 @@ App.prototype.loadConsumo = function () {
             <!-- Seletor de Período -->
             <div class="filter-section">
                 <h3 class="filter-title">Período de Análise</h3>
-                <div class="filter-row">
-                    <div class="filter-group" style="flex: 1;">
-                        <label>Período Pré-definido</label>
-                        <div class="btn-group" style="display: flex; gap: 10px; flex-wrap: wrap;">
-                            <button class="btn btn-outline btn-sm active" onclick="app.setPeriodoConsumo('dia')">Dia</button>
-                            <button class="btn btn-outline btn-sm" onclick="app.setPeriodoConsumo('semana')">Semana</button>
-                            <button class="btn btn-outline btn-sm" onclick="app.setPeriodoConsumo('mes')">Mês</button>
-                        </div>
-                    </div>
+                <div class="filter-row" style="gap: 10px; margin-bottom: 10px;">
+                    <button class="btn btn-outline" onclick="app.aplicarPeriodoConsumoHoje()">
+                        <i class="fas fa-calendar-day"></i> Hoje
+                    </button>
+                    <button class="btn btn-outline" onclick="app.aplicarPeriodoConsumoSemana()">
+                        <i class="fas fa-calendar-week"></i> 7 últimos dias
+                    </button>
+                    <button class="btn btn-outline" onclick="app.aplicarPeriodoConsumoMes()">
+                        <i class="fas fa-calendar-alt"></i> 30 últimos dias
+                    </button>
                 </div>
-                <div class="filter-row" style="margin-top: 15px;">
+                <div class="filter-row">
                     <div class="filter-group" style="flex: 1;">
                         <label>Período Personalizado</label>
                         <div style="display: flex; gap: 10px; align-items: center;">
-                            <input type="date" id="dataInicioConsumo" class="form-control" style="flex: 1;">
+                            <input type="datetime-local" id="dataInicioConsumo" class="form-control" style="flex: 1;">
                             <span>até</span>
-                            <input type="date" id="dataFimConsumo" class="form-control" style="flex: 1;">
+                            <input type="datetime-local" id="dataFimConsumo" class="form-control" style="flex: 1;">
                             <button class="btn btn-primary" onclick="app.aplicarPeriodoConsumoPersonalizado()">Aplicar</button>
                         </div>
                     </div>
@@ -3866,8 +3908,11 @@ App.prototype.loadConsumo = function () {
                     <div class="chart-header">
                         <h3 class="chart-title">Tensão (V)</h3>
                     </div>
-                    <div class="chart-body" style="height: 300px;">
+                    <div class="chart-body" style="height: 300px; position: relative;">
                         <canvas id="tensaoChart"></canvas>
+                        <div id="mensagemTensao" class="chart-message" style="display: none;">
+                            Selecione um dispositivo e período para visualizar os dados.
+                        </div>
                     </div>
                     <div class="chart-stats">
                         <div class="stat-item">
@@ -3890,8 +3935,11 @@ App.prototype.loadConsumo = function () {
                     <div class="chart-header">
                         <h3 class="chart-title">Corrente (A)</h3>
                     </div>
-                    <div class="chart-body" style="height: 300px;">
+                    <div class="chart-body" style="height: 300px; position: relative;">
                         <canvas id="correnteChart"></canvas>
+                        <div id="mensagemCorrente" class="chart-message" style="display: none;">
+                            Selecione um dispositivo e período para visualizar os dados.
+                        </div>
                     </div>
                     <div class="chart-stats">
                         <div class="stat-item">
@@ -3914,8 +3962,11 @@ App.prototype.loadConsumo = function () {
                     <div class="chart-header">
                         <h3 class="chart-title">Potência Ativa (kW)</h3>
                     </div>
-                    <div class="chart-body" style="height: 300px;">
+                    <div class="chart-body" style="height: 300px; position: relative;">
                         <canvas id="potenciaChart"></canvas>
+                        <div id="mensagemPotencia" class="chart-message" style="display: none;">
+                            Selecione um dispositivo e período para visualizar os dados.
+                        </div>
                     </div>
                     <div class="chart-stats">
                         <div class="stat-item">
@@ -3933,119 +3984,487 @@ App.prototype.loadConsumo = function () {
                     </div>
                 </div>
             </div>
-
-            <!-- Tabela de Leituras Detalhadas -->
-            <div class="table-container" style="margin-top: 20px;">
-                <div class="table-header">
-                    <h3>Leituras Detalhadas</h3>
-                </div>
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>Data/Hora</th>
-                            <th>Dispositivo</th>
-                            <th>Tensão (V)</th>
-                            <th>Corrente (A)</th>
-                            <th>Potência Ativa (kW)</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabelaConsumo">
-                        ${this.data.consumo.map(c => `
-                            <tr>
-                                <td>${c.data} ${c.hora}</td>
-                                <td>${c.dispositivo}</td>
-                                <td>${c.tensao}</td>
-                                <td>${c.corrente}</td>
-                                <td>${c.potenciaAtiva}</td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            </div>
         </div>
     `;
 
     // Inicializar estado
-    this.periodoConsumo = 'dia';
+    this.filtroSetorConsumo = '';
+    this.filtroSalaConsumo = '';
+    this.dispositivoFiltrado = '';
+    this.periodoConsumoSelecionado = false;
+
+    // Mostrar mensagens iniciais
+    this.mostrarMensagemConsumo('tensaoChart', 'mensagemTensao', 'Selecione um dispositivo e período para visualizar os dados.');
+    this.mostrarMensagemConsumo('correnteChart', 'mensagemCorrente', 'Selecione um dispositivo e período para visualizar os dados.');
+    this.mostrarMensagemConsumo('potenciaChart', 'mensagemPotencia', 'Selecione um dispositivo e período para visualizar os dados.');
+};
+
+// Função auxiliar para formatar data para datetime-local
+App.prototype.formatDateTimeLocal = function(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+};
+
+// Aplicar período pré-definidos
+App.prototype.aplicarPeriodoConsumoHoje = function () {
+    const agora = new Date();
+    const ontem = new Date(agora);
+    ontem.setDate(ontem.getDate() - 1);
+    
+    document.getElementById("dataInicioConsumo").value = this.formatDateTimeLocal(ontem);
+    document.getElementById("dataFimConsumo").value = this.formatDateTimeLocal(agora);
+    
+    this.periodoConsumoSelecionado = true;
+    this.renderConsumoCharts();
+};
+
+App.prototype.aplicarPeriodoConsumoSemana = function () {
+    const agora = new Date();
+    const seteDiasAtras = new Date(agora);
+    seteDiasAtras.setDate(seteDiasAtras.getDate() - 7);
+    
+    document.getElementById("dataInicioConsumo").value = this.formatDateTimeLocal(seteDiasAtras);
+    document.getElementById("dataFimConsumo").value = this.formatDateTimeLocal(agora);
+    
+    this.periodoConsumoSelecionado = true;
+    this.renderConsumoCharts();
+};
+
+App.prototype.aplicarPeriodoConsumoMes = function () {
+    const agora = new Date();
+    const trintaDiasAtras = new Date(agora);
+    trintaDiasAtras.setDate(trintaDiasAtras.getDate() - 30);
+    
+    document.getElementById("dataInicioConsumo").value = this.formatDateTimeLocal(trintaDiasAtras);
+    document.getElementById("dataFimConsumo").value = this.formatDateTimeLocal(agora);
+    
+    this.periodoConsumoSelecionado = true;
+    this.renderConsumoCharts();
+};
+
+App.prototype.aplicarPeriodoConsumoPersonalizado = function () {
+    const dataInicio = document.getElementById("dataInicioConsumo").value;
+    const dataFim = document.getElementById("dataFimConsumo").value;
+
+    if (!dataInicio || !dataFim) {
+        alert("Por favor, selecione ambas as datas");
+        return;
+    }
+
+    if (new Date(dataInicio) > new Date(dataFim)) {
+        alert("A data inicial deve ser anterior à data final");
+        return;
+    }
+
+    this.periodoConsumoSelecionado = true;
+    this.renderConsumoCharts();
+};
+
+// Atualizar filtro de Sala baseado no Setor selecionado
+App.prototype.updateFiltroSalaConsumo = async function () {
+    const setorId = document.getElementById('filtroSetorConsumo').value;
+    const salaSelect = document.getElementById('filtroSalaConsumo');
+    const dispositivoSelect = document.getElementById('filtroDispositivo');
+
+    this.filtroSetorConsumo = setorId;
+
+    if (!setorId) {
+        salaSelect.innerHTML = '<option value="">Selecione uma sala</option>';
+        salaSelect.disabled = true;
+        dispositivoSelect.innerHTML = '<option value="">Selecione um dispositivo</option>';
+        dispositivoSelect.disabled = true;
+        this.filtroSalaConsumo = '';
+        this.dispositivoFiltrado = '';
+        return;
+    }
+
+    try {
+        const salasResponse = await callApi(`/department/${setorId}/room?name=&page=0&size=1000`, { method: "GET" });
+        const salas = salasResponse.content || [];
+
+        salaSelect.innerHTML = `
+            <option value="">Todas as Salas</option>
+            ${salas.map(sala => `
+                <option value="${sala.id}">${sala.name}</option>
+            `).join('')}
+        `;
+        salaSelect.disabled = false;
+
+        dispositivoSelect.innerHTML = '<option value="">Selecione um dispositivo</option>';
+        dispositivoSelect.disabled = true;
+        this.filtroSalaConsumo = '';
+        this.dispositivoFiltrado = '';
+
+    } catch (error) {
+        console.error("Erro ao carregar salas:", error);
+        salaSelect.innerHTML = '<option value="">Erro ao carregar salas</option>';
+        salaSelect.disabled = true;
+    }
+};
+
+// Atualizar filtro de Dispositivo baseado na Sala selecionada
+App.prototype.updateFiltroDispositivoConsumo = async function () {
+    const salaId = document.getElementById('filtroSalaConsumo').value;
+    const dispositivoSelect = document.getElementById('filtroDispositivo');
+
+    this.filtroSalaConsumo = salaId;
+
+    if (!salaId) {
+        dispositivoSelect.innerHTML = '<option value="">Selecione um dispositivo</option>';
+        dispositivoSelect.disabled = true;
+        this.dispositivoFiltrado = '';
+        return;
+    }
+
+    try {
+        const vinculosResponse = await callApi(`/device-room?roomId=${salaId}&page=0&size=1000`, { method: "GET" });
+        const vinculos = vinculosResponse.content || [];
+
+        dispositivoSelect.innerHTML = `
+            <option value="">Selecione um dispositivo</option>
+            ${vinculos.map(vinculo => `
+                <option value="${vinculo.id}">${vinculo.alias}</option>
+            `).join('')}
+        `;
+        dispositivoSelect.disabled = false;
+
+        this.dispositivoFiltrado = '';
+    } catch (error) {
+        console.error("Erro ao carregar dispositivos:", error);
+        dispositivoSelect.innerHTML = '<option value="">Erro ao carregar dispositivos</option>';
+        dispositivoSelect.disabled = true;
+    }
+};
+
+// Limpar todos os filtros hierárquicos
+App.prototype.limparFiltrosConsumo = function () {
+    document.getElementById('filtroSetorConsumo').value = '';
+    document.getElementById('filtroSalaConsumo').innerHTML = '<option value="">Selecione uma sala</option>';
+    document.getElementById('filtroSalaConsumo').disabled = true;
+    document.getElementById('filtroDispositivo').innerHTML = '<option value="">Selecione um dispositivo</option>';
+    document.getElementById('filtroDispositivo').disabled = true;
+
+    this.filtroSetorConsumo = '';
+    this.filtroSalaConsumo = '';
     this.dispositivoFiltrado = '';
 
     this.renderConsumoCharts();
 };
 
-App.prototype.setPeriodoConsumo = function (periodo) {
-    this.periodoConsumo = periodo;
-
-    // Atualizar botões ativos
-    document.querySelectorAll('.btn-group .btn').forEach(btn => btn.classList.remove('active'));
-    event.target.classList.add('active');
-
-    // Limpar datas personalizadas
-    document.getElementById('dataInicioConsumo').value = '';
-    document.getElementById('dataFimConsumo').value = '';
-
-    this.renderConsumoCharts();
-};
-
-App.prototype.aplicarPeriodoHoje = function () {
-    const agora = new Date();
-    const ontem = new Date(agora);
-    ontem.setDate(ontem.getDate() - 1);
-    
-    document.getElementById("dataInicio").value = this.formatDateTimeLocal(ontem);
-    document.getElementById("dataFim").value = this.formatDateTimeLocal(agora);
-    
-    this.periodoSelecionado = true;
-    this.renderRelatorioCharts();
-};
-
+// Atualizar gráficos quando o dispositivo é selecionado
 App.prototype.updateConsumoCharts = function () {
     this.dispositivoFiltrado = document.getElementById('filtroDispositivo').value;
     this.renderConsumoCharts();
 };
 
-App.prototype.renderConsumoCharts = function () {
+// Função auxiliar para mostrar mensagem
+App.prototype.mostrarMensagemConsumo = function (canvasId, mensagemId, texto) {
+    const canvas = document.getElementById(canvasId);
+    const mensagem = document.getElementById(mensagemId);
+    
+    if (canvas && mensagem) {
+        canvas.style.display = "none";
+        mensagem.style.display = "flex";
+        mensagem.textContent = texto;
+    }
+};
+
+// Função auxiliar para mostrar canvas
+App.prototype.mostrarCanvasConsumo = function (canvasId, mensagemId) {
+    const canvas = document.getElementById(canvasId);
+    const mensagem = document.getElementById(mensagemId);
+    
+    if (canvas && mensagem) {
+        canvas.style.display = "block";
+        mensagem.style.display = "none";
+    }
+};
+
+// Renderizar gráficos
+App.prototype.renderConsumoCharts = async function () {
     const canvasTensao = document.getElementById('tensaoChart');
     const canvasCorrente = document.getElementById('correnteChart');
     const canvasPotencia = document.getElementById('potenciaChart');
 
     if (!canvasTensao || !canvasCorrente || !canvasPotencia) return;
 
+    const dataInicio = document.getElementById('dataInicioConsumo').value;
+    const dataFim = document.getElementById('dataFimConsumo').value;
+    const dispositivoId = this.dispositivoFiltrado;
+
     // Destruir gráficos anteriores
-    if (this.chartTensao) this.chartTensao.destroy();
-    if (this.chartCorrente) this.chartCorrente.destroy();
-    if (this.chartPotencia) this.chartPotencia.destroy();
+    if (this.chartTensao) {
+        this.chartTensao.destroy();
+        this.chartTensao = null;
+    }
+    if (this.chartCorrente) {
+        this.chartCorrente.destroy();
+        this.chartCorrente = null;
+    }
+    if (this.chartPotencia) {
+        this.chartPotencia.destroy();
+        this.chartPotencia = null;
+    }
 
-    // Gerar dados para cada gráfico
-    const dadosTensao = this.gerarDadosAleatorios(labels.length, 210, 230);
-    const dadosCorrente = this.gerarDadosAleatorios(labels.length, 10, 25);
-    const dadosPotencia = this.gerarDadosAleatorios(labels.length, 2, 8);
+    // Verificar se período foi selecionado
+    if (!this.periodoConsumoSelecionado || !dataInicio || !dataFim) {
+        this.mostrarMensagemConsumo('tensaoChart', 'mensagemTensao', 'Selecione um período para visualizar os dados.');
+        this.mostrarMensagemConsumo('correnteChart', 'mensagemCorrente', 'Selecione um período para visualizar os dados.');
+        this.mostrarMensagemConsumo('potenciaChart', 'mensagemPotencia', 'Selecione um período para visualizar os dados.');
+        return;
+    }
 
-    // Calcular estatísticas
-    const calcularStats = (dados) => ({
-        media: (dados.reduce((a, b) => a + b, 0) / dados.length).toFixed(2),
-        min: Math.min(...dados).toFixed(2),
-        max: Math.max(...dados).toFixed(2)
+    // Verificar se dispositivo foi selecionado
+    if (!dispositivoId) {
+        this.mostrarMensagemConsumo('tensaoChart', 'mensagemTensao', 'Selecione um dispositivo para visualizar os dados.');
+        this.mostrarMensagemConsumo('correnteChart', 'mensagemCorrente', 'Selecione um dispositivo para visualizar os dados.');
+        this.mostrarMensagemConsumo('potenciaChart', 'mensagemPotencia', 'Selecione um dispositivo para visualizar os dados.');
+        return;
+    }
+
+    try {
+        // Buscar dados da API
+        const params = new URLSearchParams({
+            deviceRoomId: dispositivoId,
+            start: dataInicio,
+            end: dataFim
+        });
+
+        const response = await callApi(`/consumption/device/detail?${params.toString()}`, { method: "GET" });
+
+        if (!response) {
+            throw new Error("Nenhum dado retornado da API");
+        }
+
+        // Processar dados de Tensão
+        if (response.voltage && response.voltage.points && response.voltage.points.length > 0) {
+            this.mostrarCanvasConsumo('tensaoChart', 'mensagemTensao');
+            this.renderGraficoTensao(response.voltage, response.granularity);
+        } else {
+            this.mostrarMensagemConsumo('tensaoChart', 'mensagemTensao', 'Não há dados de tensão disponíveis para o período selecionado.');
+        }
+
+        // Processar dados de Corrente
+        if (response.current && response.current.points && response.current.points.length > 0) {
+            this.mostrarCanvasConsumo('correnteChart', 'mensagemCorrente');
+            this.renderGraficoCorrente(response.current, response.granularity);
+        } else {
+            this.mostrarMensagemConsumo('correnteChart', 'mensagemCorrente', 'Não há dados de corrente disponíveis para o período selecionado.');
+        }
+
+        // Processar dados de Potência
+        if (response.power && response.power.points && response.power.points.length > 0) {
+            this.mostrarCanvasConsumo('potenciaChart', 'mensagemPotencia');
+            this.renderGraficoPotencia(response.power, response.granularity);
+        } else {
+            this.mostrarMensagemConsumo('potenciaChart', 'mensagemPotencia', 'Não há dados de potência disponíveis para o período selecionado.');
+        }
+
+    } catch (error) {
+        console.error("Erro ao renderizar gráficos de consumo:", error);
+        this.mostrarMensagemConsumo('tensaoChart', 'mensagemTensao', 'Erro ao carregar dados. Tente novamente.');
+        this.mostrarMensagemConsumo('correnteChart', 'mensagemCorrente', 'Erro ao carregar dados. Tente novamente.');
+        this.mostrarMensagemConsumo('potenciaChart', 'mensagemPotencia', 'Erro ao carregar dados. Tente novamente.');
+    }
+};
+
+// Renderizar gráfico de Tensão
+App.prototype.renderGraficoTensao = function (voltageData, granularity) {
+    const canvas = document.getElementById('tensaoChart');
+    const labels = this.formatarLabelsConsumo(voltageData.points, granularity);
+    const dados = voltageData.points.map(p => p.avg);
+    const dadosMax = voltageData.points.map(p => p.max);
+    const dadosMin = voltageData.points.map(p => p.min);
+
+    // Atualizar estatísticas
+    const stats = voltageData.statistics;
+    document.getElementById('tensaoMedia').textContent = stats.average.toFixed(2) + ' V';
+    document.getElementById('tensaoMin').textContent = stats.minimum.toFixed(2) + ' V';
+    document.getElementById('tensaoMax').textContent = stats.maximum.toFixed(2) + ' V';
+
+    this.chartTensao = new Chart(canvas, {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [
+                {
+                    label: 'Tensão Média',
+                    data: dados,
+                    borderColor: '#023047',
+                    backgroundColor: 'rgba(2, 48, 71, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4
+                },
+                {
+                    label: 'Máximo',
+                    data: dadosMax,
+                    borderColor: '#ef476f',
+                    borderWidth: 1,
+                    borderDash: [5, 5],
+                    fill: false,
+                    pointRadius: 0
+                },
+                {
+                    label: 'Mínimo',
+                    data: dadosMin,
+                    borderColor: '#06d6a0',
+                    borderWidth: 1,
+                    borderDash: [5, 5],
+                    fill: false,
+                    pointRadius: 0
+                }
+            ]
+        },
+        options: this.getChartOptions('Tensão (V)', 'V')
     });
+};
 
-    const statsTensao = calcularStats(dadosTensao);
-    const statsCorrente = calcularStats(dadosCorrente);
-    const statsPotencia = calcularStats(dadosPotencia);
+// Renderizar gráfico de Corrente
+App.prototype.renderGraficoCorrente = function (currentData, granularity) {
+    const canvas = document.getElementById('correnteChart');
+    const labels = this.formatarLabelsConsumo(currentData.points, granularity);
+    const dados = currentData.points.map(p => p.avg);
+    const dadosMax = currentData.points.map(p => p.max);
+    const dadosMin = currentData.points.map(p => p.min);
 
-    // Atualizar estatísticas na interface
-    document.getElementById('tensaoMedia').textContent = statsTensao.media + ' V';
-    document.getElementById('tensaoMin').textContent = statsTensao.min + ' V';
-    document.getElementById('tensaoMax').textContent = statsTensao.max + ' V';
+    // Atualizar estatísticas
+    const stats = currentData.statistics;
+    document.getElementById('correnteMedia').textContent = stats.average.toFixed(2) + ' A';
+    document.getElementById('correnteMin').textContent = stats.minimum.toFixed(2) + ' A';
+    document.getElementById('correnteMax').textContent = stats.maximum.toFixed(2) + ' A';
 
-    document.getElementById('correnteMedia').textContent = statsCorrente.media + ' A';
-    document.getElementById('correnteMin').textContent = statsCorrente.min + ' A';
-    document.getElementById('correnteMax').textContent = statsCorrente.max + ' A';
+    this.chartCorrente = new Chart(canvas, {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [
+                {
+                    label: 'Corrente Média',
+                    data: dados,
+                    borderColor: '#fb8500',
+                    backgroundColor: 'rgba(251, 133, 0, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4
+                },
+                {
+                    label: 'Máximo',
+                    data: dadosMax,
+                    borderColor: '#ef476f',
+                    borderWidth: 1,
+                    borderDash: [5, 5],
+                    fill: false,
+                    pointRadius: 0
+                },
+                {
+                    label: 'Mínimo',
+                    data: dadosMin,
+                    borderColor: '#06d6a0',
+                    borderWidth: 1,
+                    borderDash: [5, 5],
+                    fill: false,
+                    pointRadius: 0
+                }
+            ]
+        },
+        options: this.getChartOptions('Corrente (A)', 'A')
+    });
+};
 
-    document.getElementById('potenciaMedia').textContent = statsPotencia.media + ' kW';
-    document.getElementById('potenciaMin').textContent = statsPotencia.min + ' kW';
-    document.getElementById('potenciaMax').textContent = statsPotencia.max + ' kW';
+// Renderizar gráfico de Potência
+App.prototype.renderGraficoPotencia = function (powerData, granularity) {
+    const canvas = document.getElementById('potenciaChart');
+    const labels = this.formatarLabelsConsumo(powerData.points, granularity);
+    const dados = powerData.points.map(p => p.avg / 1000); // Converter para kW
+    const dadosMax = powerData.points.map(p => p.max / 1000);
+    const dadosMin = powerData.points.map(p => p.min / 1000);
 
-    // Configuração comum dos gráficos
-    const commonOptions = {
+    // Atualizar estatísticas
+    const stats = powerData.statistics;
+    document.getElementById('potenciaMedia').textContent = (stats.average / 1000).toFixed(2) + ' kW';
+    document.getElementById('potenciaMin').textContent = (stats.minimum / 1000).toFixed(2) + ' kW';
+    document.getElementById('potenciaMax').textContent = (stats.maximum / 1000).toFixed(2) + ' kW';
+
+    this.chartPotencia = new Chart(canvas, {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [
+                {
+                    label: 'Potência Média',
+                    data: dados,
+                    borderColor: '#ffb703',
+                    backgroundColor: 'rgba(255, 183, 3, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4
+                },
+                {
+                    label: 'Máximo',
+                    data: dadosMax,
+                    borderColor: '#ef476f',
+                    borderWidth: 1,
+                    borderDash: [5, 5],
+                    fill: false,
+                    pointRadius: 0
+                },
+                {
+                    label: 'Mínimo',
+                    data: dadosMin,
+                    borderColor: '#06d6a0',
+                    borderWidth: 1,
+                    borderDash: [5, 5],
+                    fill: false,
+                    pointRadius: 0
+                }
+            ]
+        },
+        options: this.getChartOptions('Potência Ativa (kW)', 'kW')
+    });
+};
+
+// Formatar labels baseado na granularidade
+App.prototype.formatarLabelsConsumo = function (points, granularity) {
+    return points.map(point => {
+        const timestamp = new Date(point.timestamp);
+        
+        if (granularity === "HOURLY") {
+            return timestamp.toLocaleString("pt-BR", { 
+                day: "2-digit", 
+                month: "2-digit", 
+                hour: "2-digit", 
+                minute: "2-digit" 
+            });
+        } else if (granularity === "DAILY") {
+            return timestamp.toLocaleDateString("pt-BR", { 
+                day: "2-digit", 
+                month: "2-digit", 
+                year: "numeric" 
+            });
+        } else if (granularity === "WEEKLY") {
+            return `Semana ${timestamp.toLocaleDateString("pt-BR", { 
+                day: "2-digit", 
+                month: "2-digit" 
+            })}`;
+        } else if (granularity === "MONTHLY") {
+            return timestamp.toLocaleDateString("pt-BR", { 
+                month: "short", 
+                year: "numeric" 
+            });
+        } else {
+            return timestamp.toLocaleDateString("pt-BR");
+        }
+    });
+};
+
+// Obter opções comuns dos gráficos
+App.prototype.getChartOptions = function (yAxisLabel, unit) {
+    return {
         responsive: true,
         maintainAspectRatio: false,
         interaction: {
@@ -4056,219 +4475,29 @@ App.prototype.renderConsumoCharts = function () {
             legend: {
                 display: true,
                 position: 'top'
+            },
+            tooltip: {
+                callbacks: {
+                    label: function (context) {
+                        return context.dataset.label + ': ' + context.parsed.y.toFixed(2) + ' ' + unit;
+                    }
+                }
             }
         },
         scales: {
             y: {
-                beginAtZero: false
+                beginAtZero: false,
+                title: {
+                    display: true,
+                    text: yAxisLabel
+                }
+            },
+            x: {
+                title: {
+                    display: true,
+                    text: 'Período'
+                }
             }
         }
     };
-
-    // Criar gráfico de Tensão
-    this.chartTensao = new Chart(canvasTensao, {
-        type: 'line',
-        data: {
-            labels,
-            datasets: [
-                {
-                    label: 'Tensão',
-                    data: dadosTensao,
-                    borderColor: '#023047',
-                    backgroundColor: 'rgba(2, 48, 71, 0.1)',
-                    borderWidth: 2,
-                    fill: true,
-                    tension: 0.4
-                },
-                {
-                    label: 'Média',
-                    data: Array(labels.length).fill(parseFloat(statsTensao.media)),
-                    borderColor: '#219ebc',
-                    borderWidth: 1,
-                    borderDash: [5, 5],
-                    fill: false,
-                    pointRadius: 0
-                },
-                {
-                    label: 'Mínimo',
-                    data: Array(labels.length).fill(parseFloat(statsTensao.min)),
-                    borderColor: '#06d6a0',
-                    borderWidth: 1,
-                    borderDash: [2, 2],
-                    fill: false,
-                    pointRadius: 0
-                },
-                {
-                    label: 'Máximo',
-                    data: Array(labels.length).fill(parseFloat(statsTensao.max)),
-                    borderColor: '#ef476f',
-                    borderWidth: 1,
-                    borderDash: [2, 2],
-                    fill: false,
-                    pointRadius: 0
-                }
-            ]
-        },
-        options: {
-            ...commonOptions,
-            plugins: {
-                ...commonOptions.plugins,
-                tooltip: {
-                    callbacks: {
-                        label: function (context) {
-                            return context.dataset.label + ': ' + context.parsed.y.toFixed(2) + ' V';
-                        }
-                    }
-                }
-            },
-            scales: {
-                ...commonOptions.scales,
-                y: {
-                    ...commonOptions.scales.y,
-                    title: {
-                        display: true,
-                        text: 'Tensão (V)'
-                    }
-                }
-            }
-        }
-    });
-
-    // Criar gráfico de Corrente
-    this.chartCorrente = new Chart(canvasCorrente, {
-        type: 'line',
-        data: {
-            labels,
-            datasets: [
-                {
-                    label: 'Corrente',
-                    data: dadosCorrente,
-                    borderColor: '#fb8500',
-                    backgroundColor: 'rgba(251, 133, 0, 0.1)',
-                    borderWidth: 2,
-                    fill: true,
-                    tension: 0.4
-                },
-                {
-                    label: 'Média',
-                    data: Array(labels.length).fill(parseFloat(statsCorrente.media)),
-                    borderColor: '#219ebc',
-                    borderWidth: 1,
-                    borderDash: [5, 5],
-                    fill: false,
-                    pointRadius: 0
-                },
-                {
-                    label: 'Mínimo',
-                    data: Array(labels.length).fill(parseFloat(statsCorrente.min)),
-                    borderColor: '#06d6a0',
-                    borderWidth: 1,
-                    borderDash: [2, 2],
-                    fill: false,
-                    pointRadius: 0
-                },
-                {
-                    label: 'Máximo',
-                    data: Array(labels.length).fill(parseFloat(statsCorrente.max)),
-                    borderColor: '#ef476f',
-                    borderWidth: 1,
-                    borderDash: [2, 2],
-                    fill: false,
-                    pointRadius: 0
-                }
-            ]
-        },
-        options: {
-            ...commonOptions,
-            plugins: {
-                ...commonOptions.plugins,
-                tooltip: {
-                    callbacks: {
-                        label: function (context) {
-                            return context.dataset.label + ': ' + context.parsed.y.toFixed(2) + ' A';
-                        }
-                    }
-                }
-            },
-            scales: {
-                ...commonOptions.scales,
-                y: {
-                    ...commonOptions.scales.y,
-                    title: {
-                        display: true,
-                        text: 'Corrente (A)'
-                    }
-                }
-            }
-        }
-    });
-
-    // Criar gráfico de Potência Ativa
-    this.chartPotencia = new Chart(canvasPotencia, {
-        type: 'line',
-        data: {
-            labels,
-            datasets: [
-                {
-                    label: 'Potência Ativa',
-                    data: dadosPotencia,
-                    borderColor: '#ffb703',
-                    backgroundColor: 'rgba(255, 183, 3, 0.1)',
-                    borderWidth: 2,
-                    fill: true,
-                    tension: 0.4
-                },
-                {
-                    label: 'Média',
-                    data: Array(labels.length).fill(parseFloat(statsPotencia.media)),
-                    borderColor: '#219ebc',
-                    borderWidth: 1,
-                    borderDash: [5, 5],
-                    fill: false,
-                    pointRadius: 0
-                },
-                {
-                    label: 'Mínimo',
-                    data: Array(labels.length).fill(parseFloat(statsPotencia.min)),
-                    borderColor: '#06d6a0',
-                    borderWidth: 1,
-                    borderDash: [2, 2],
-                    fill: false,
-                    pointRadius: 0
-                },
-                {
-                    label: 'Máximo',
-                    data: Array(labels.length).fill(parseFloat(statsPotencia.max)),
-                    borderColor: '#ef476f',
-                    borderWidth: 1,
-                    borderDash: [2, 2],
-                    fill: false,
-                    pointRadius: 0
-                }
-            ]
-        },
-        options: {
-            ...commonOptions,
-            plugins: {
-                ...commonOptions.plugins,
-                tooltip: {
-                    callbacks: {
-                        label: function (context) {
-                            return context.dataset.label + ': ' + context.parsed.y.toFixed(2) + ' kW';
-                        }
-                    }
-                }
-            },
-            scales: {
-                ...commonOptions.scales,
-                y: {
-                    ...commonOptions.scales.y,
-                    title: {
-                        display: true,
-                        text: 'Potência Ativa (kW)'
-                    }
-                }
-            }
-        }
-    });
 };
