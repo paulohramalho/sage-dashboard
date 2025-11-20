@@ -3848,7 +3848,7 @@ App.prototype.loadConsumo = async function () {
                     <div class="filter-group">
                         <label>Setor</label>
                         <select id="filtroSetorConsumo" onchange="app.updateFiltroSalaConsumo()">
-                            <option value="">Todos os Setores</option>
+                            <option value="">Selecione um setor</option>
                             ${setores.map(s => `
                                 <option value="${s.id}">${s.name}</option>
                             `).join('')}
@@ -4087,7 +4087,7 @@ App.prototype.updateFiltroSalaConsumo = async function () {
         const salas = salasResponse.content || [];
 
         salaSelect.innerHTML = `
-            <option value="">Todas as Salas</option>
+            <option value="">Selecione uma sala</option>
             ${salas.map(sala => `
                 <option value="${sala.id}">${sala.name}</option>
             `).join('')}
