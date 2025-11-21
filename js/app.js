@@ -114,100 +114,184 @@ class App {
         }
     }
 
-    async loadDashboard() {
-        // Usar dados mockados ao invés da API
-        this.dashboardData = this.getMockDashboardData();
+// ===== INTEGRAÇÃO DO DASHBOARD COM API REAL =====
 
-        const content = document.getElementById('page-content');
+async loadDashboard() {
+    const content = document.getElementById('page-content');
+    
+    // Mostrar loading
+    content.innerHTML = `
+        <div class="dashboard-page">
+            <h2>Dashboard</h2>
+            <div style="text-align: center; padding: 50px;">
+                <i class="fas fa-spinner fa-spin" style="font-size: 48px; color: #ffb703;"></i>
+                <p style="margin-top: 20px; color: #666;">Carregando dados do dashboard...</p>
+            </div>
+        </div>
+    `;
+
+    try {
+        // Definir período: hoje (do início do dia até agora)
+        const agora = new Date();
+        const inicioHoje = new Date(agora);
+        inicioHoje.setHours(0, 0, 0, 0);
+
+        // Formatar datas no formato ISO 8601
+        const startDate = inicioHoje.toISOString();
+        const endDate = agora.toISOString();
+
+        // Chamar API do dashboard (sem passar empresaId)
+        const params = new URLSearchParams({
+            startDate: startDate,
+            endDate: endDate
+        });
+
+        const dashboardData = await callApi(`/dashboard?${params.toString()}`, { 
+            method: "GET" 
+        });
+
+        // Validar resposta
+        if (!dashboardData) {
+            throw new Error("Nenhum dado retornado da API");
+        }
+
+        // Armazenar dados
+        this.dashboardData = dashboardData;
+
+        // Renderizar dashboard
+        this.renderDashboard();
+
+    } catch (error) {
+        console.error("Erro ao carregar dashboard:", error);
         content.innerHTML = `
             <div class="dashboard-page">
                 <h2>Dashboard</h2>
-                <div class="stats-row">
-                    <div class="stat-card">
-                        <div class="stat-card-icon"><i class="fas fa-bolt"></i></div>
-                        <div class="stat-card-label">Consumo Total Hoje</div>
-                        <div class="stat-card-value">${this.dashboardData.consumoHoje.toLocaleString('pt-BR')} kWh</div>
-                        <div class="stat-card-change">↑ ${this.dashboardData.consumoHojeVariacao}% vs ontem</div>
+                <div style="text-align: center; padding: 50px;">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 48px; color: #ef476f;"></i>
+                    <p style="margin-top: 20px; color: #666;">
+                        Erro ao carregar dados do dashboard.
+                    </p>
+                    <p style="color: #999; font-size: 14px; margin-top: 10px;">
+                        ${error.message}
+                    </p>
+                    <button class="btn btn-primary" onclick="app.loadDashboard()" style="margin-top: 20px;">
+                        <i class="fas fa-redo"></i> Tentar Novamente
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+}
+
+renderDashboard() {
+    const content = document.getElementById('page-content');
+    const data = this.dashboardData;
+
+    // Extrair dados com valores padrão
+    const stats = data.estatisticas || {};
+    const consumoPorHora = data.consumoPorHora || [];
+    const topDispositivos = data.topDispositivos || [];
+    const consumoPorSetor = data.consumoPorSetor || [];
+    const ultimasLeituras = data.ultimasLeituras || [];
+
+    // Formatar variação (positiva ou negativa)
+    const variacao = stats.consumoHojeVariacao || 0;
+    const variacaoIcon = variacao >= 0 ? '↑' : '↓';
+    const variacaoClass = variacao >= 0 ? 'stat-card-change-up' : 'stat-card-change-down';
+
+    content.innerHTML = `
+        <div class="dashboard-page">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2>Dashboard</h2>
+                <button class="btn btn-outline" onclick="app.loadDashboard()">
+                    <i class="fas fa-sync-alt"></i> Atualizar
+                </button>
+            </div>
+
+            <!-- Cards de Estatísticas -->
+            <div class="stats-row">
+                <div class="stat-card">
+                    <div class="stat-card-icon"><i class="fas fa-bolt"></i></div>
+                    <div class="stat-card-label">Consumo Total Hoje</div>
+                    <div class="stat-card-value">
+                        ${(stats.consumoHoje || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kWh
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-card-icon"><i class="fas fa-calendar-alt"></i></div>
-                        <div class="stat-card-label">Consumo Mensal</div>
-                        <div class="stat-card-value">${this.dashboardData.consumoMensal.toLocaleString('pt-BR')} kWh</div>
-                        <div class="stat-card-change">Até o momento</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-card-icon"><i class="fas fa-plug"></i></div>
-                        <div class="stat-card-label">Dispositivos Ativos</div>
-                        <div class="stat-card-value">${this.dashboardData.dispositivosAtivos}</div>
-                        <div class="stat-card-change">Monitorados</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-card-icon"><i class="fas fa-chart-pie"></i></div>
-                        <div class="stat-card-label">Custo Estimado</div>
-                        <div class="stat-card-value">R$ ${this.dashboardData.custoEstimado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
-                        <div class="stat-card-change">Mês atual</div>
+                    <div class="stat-card-change ${variacaoClass}">
+                        ${variacaoIcon} ${Math.abs(variacao).toFixed(1)}% vs ontem
                     </div>
                 </div>
-
-                <!-- Gráfico de Consumo por Hora (largura total) -->
-                <div class="charts-grid-full">
-                    <div class="chart-container">
-                        <div class="chart-header">
-                            <h3 class="chart-title">Consumo por Hora</h3>
-                            <div class="chart-controls">
-                                <select id="chartPeriodConsumo">
-                                    <option>Hoje</option>
-                                    <option>Esta Semana</option>
-                                    <option>Este Mês</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="chart-body">
-                            <canvas id="consumoChart"></canvas>
-                        </div>
+                <div class="stat-card">
+                    <div class="stat-card-icon"><i class="fas fa-calendar-alt"></i></div>
+                    <div class="stat-card-label">Consumo Mensal</div>
+                    <div class="stat-card-value">
+                        ${(stats.consumoMensal || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kWh
                     </div>
+                    <div class="stat-card-change">Até o momento</div>
                 </div>
-
-                <!-- Dois gráficos lado a lado: Top Dispositivos e Setores -->
-                <div class="charts-grid-2">
-                    <div class="chart-container">
-                        <div class="chart-header">
-                            <h3 class="chart-title">Top 5 Dispositivos Consumidores</h3>
-                            <div class="chart-controls">
-                                <select id="chartPeriodDispositivos">
-                                    <option>Hoje</option>
-                                    <option>Esta Semana</option>
-                                    <option>Este Mês</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="chart-body">
-                            <canvas id="topDispositivosChart"></canvas>
-                        </div>
-                    </div>
-
-                    <div class="chart-container">
-                        <div class="chart-header">
-                            <h3 class="chart-title">Consumo por Setor</h3>
-                            <div class="chart-controls">
-                                <select id="chartPeriodSetor">
-                                    <option>Hoje</option>
-                                    <option>Esta Semana</option>
-                                    <option>Este Mês</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="chart-body">
-                            <canvas id="setorChart"></canvas>
-                        </div>
-                    </div>
+                <div class="stat-card">
+                    <div class="stat-card-icon"><i class="fas fa-plug"></i></div>
+                    <div class="stat-card-label">Dispositivos Ativos</div>
+                    <div class="stat-card-value">${stats.dispositivosAtivos || 0}</div>
+                    <div class="stat-card-change">Monitorados</div>
                 </div>
+                <div class="stat-card">
+                    <div class="stat-card-icon"><i class="fas fa-dollar-sign"></i></div>
+                    <div class="stat-card-label">Custo Estimado</div>
+                    <div class="stat-card-value">
+                        R$ ${(stats.custoEstimado || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </div>
+                    <div class="stat-card-change">Mês atual</div>
+                </div>
+            </div>
 
-                <!-- Tabela de Leituras -->
+            <!-- Gráfico de Consumo por Hora (largura total) -->
+            <div class="charts-grid-full">
                 <div class="chart-container">
                     <div class="chart-header">
-                        <h3 class="chart-title">Últimas Leituras</h3>
+                        <h3 class="chart-title">Consumo por Hora</h3>
                     </div>
+                    <div class="chart-body">
+                        ${consumoPorHora.length > 0 ? 
+                            '<canvas id="consumoChart"></canvas>' : 
+                            '<p style="text-align: center; color: #999; padding: 40px;">Sem dados disponíveis</p>'
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dois gráficos lado a lado: Top Dispositivos e Setores -->
+            <div class="charts-grid-2">
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Top 5 Dispositivos Consumidores</h3>
+                    </div>
+                    <div class="chart-body">
+                        ${topDispositivos.length > 0 ? 
+                            '<canvas id="topDispositivosChart"></canvas>' : 
+                            '<p style="text-align: center; color: #999; padding: 40px;">Sem dados disponíveis</p>'
+                        }
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Consumo por Setor</h3>
+                    </div>
+                    <div class="chart-body">
+                        ${consumoPorSetor.length > 0 ? 
+                            '<canvas id="setorChart"></canvas>' : 
+                            '<p style="text-align: center; color: #999; padding: 40px;">Sem dados disponíveis</p>'
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabela de Últimas Leituras -->
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h3 class="chart-title">Últimas Leituras</h3>
+                </div>
+                ${ultimasLeituras.length > 0 ? `
                     <table class="data-table">
                         <thead>
                             <tr>
@@ -219,420 +303,275 @@ class App {
                             </tr>
                         </thead>
                         <tbody>
-                            ${this.dashboardData.ultimasLeituras.map(c => `
+                            ${ultimasLeituras.map(leitura => `
                                 <tr>
-                                    <td>${c.data} ${c.hora}</td>
-                                    <td>${c.dispositivo}</td>
-                                    <td>${c.corrente}</td>
-                                    <td>${c.tensao}</td>
-                                    <td>${c.potenciaAtiva}</td>
+                                    <td>${leitura.data} ${leitura.hora}</td>
+                                    <td>${leitura.dispositivo}</td>
+                                    <td>${(leitura.corrente || 0).toFixed(2)}</td>
+                                    <td>${(leitura.tensao || 0).toFixed(2)}</td>
+                                    <td>${(leitura.potenciaAtiva || 0).toFixed(2)}</td>
                                 </tr>
                             `).join('')}
                         </tbody>
                     </table>
-                </div>
+                ` : `
+                    <p style="text-align: center; color: #999; padding: 40px;">Sem leituras disponíveis</p>
+                `}
             </div>
-        `;
+        </div>
+    `;
 
-        // Destruir gráficos anteriores
-        if (this.chartConsumo) {
-            this.chartConsumo.destroy();
-            this.chartConsumo = null;
-        }
-        if (this.chartTopDispositivos) {
-            this.chartTopDispositivos.destroy();
-            this.chartTopDispositivos = null;
-        }
-        if (this.chartSetor) {
-            this.chartSetor.destroy();
-            this.chartSetor = null;
-        }
-
-        // Renderizar gráficos com delay
-        setTimeout(() => {
-            this.renderConsumoChart();
-            this.renderTopDispositivosChart();
-            this.renderSetorChart();
-
-            // Adicionar eventos aos selects
-            document.getElementById('chartPeriodConsumo')?.addEventListener('change', () => {
-                this.renderConsumoChart();
-            });
-
-            document.getElementById('chartPeriodDispositivos')?.addEventListener('change', () => {
-                this.renderTopDispositivosChart();
-            });
-
-            document.getElementById('chartPeriodSetor')?.addEventListener('change', () => {
-                this.renderSetorChart();
-            });
-        }, 100);
+    // Destruir gráficos anteriores
+    if (this.chartConsumo) {
+        this.chartConsumo.destroy();
+        this.chartConsumo = null;
+    }
+    if (this.chartTopDispositivos) {
+        this.chartTopDispositivos.destroy();
+        this.chartTopDispositivos = null;
+    }
+    if (this.chartSetor) {
+        this.chartSetor.destroy();
+        this.chartSetor = null;
     }
 
-    getMockDashboardData() {
-        return {
-            consumoHoje: 1245.5,
-            consumoHojeVariacao: 5,
-            consumoMensal: 37842,
-            dispositivosAtivos: 8,
-            custoEstimado: 1245.50,
+    // Renderizar gráficos com delay
+    setTimeout(() => {
+        if (consumoPorHora.length > 0) {
+            this.renderConsumoChart();
+        }
+        if (topDispositivos.length > 0) {
+            this.renderTopDispositivosChart();
+        }
+        if (consumoPorSetor.length > 0) {
+            this.renderSetorChart();
+        }
+    }, 100);
+};
 
-            consumoPorHora: [
-                { hora: '00:00', consumo: 98.5, media: 85.2, minimo: 72.5, maximo: 105.3 },
-                { hora: '01:00', consumo: 92.3, media: 80.1, minimo: 68.2, maximo: 98.7 },
-                { hora: '02:00', consumo: 88.1, media: 76.5, minimo: 65.1, maximo: 94.2 },
-                { hora: '03:00', consumo: 85.7, media: 74.3, minimo: 63.2, maximo: 91.6 },
-                { hora: '04:00', consumo: 84.2, media: 73.0, minimo: 62.1, maximo: 89.9 },
-                { hora: '05:00', consumo: 86.5, media: 75.0, minimo: 63.8, maximo: 92.5 },
-                { hora: '06:00', consumo: 95.8, media: 83.1, minimo: 70.7, maximo: 102.4 },
-                { hora: '07:00', consumo: 125.4, media: 108.7, minimo: 92.5, maximo: 134.0 },
-                { hora: '08:00', consumo: 168.9, media: 146.4, minimo: 124.6, maximo: 180.5 },
-                { hora: '09:00', consumo: 185.2, media: 160.6, minimo: 136.7, maximo: 197.9 },
-                { hora: '10:00', consumo: 192.5, media: 166.9, minimo: 142.0, maximo: 205.7 },
-                { hora: '11:00', consumo: 188.3, media: 163.2, minimo: 138.9, maximo: 201.2 },
-                { hora: '12:00', consumo: 156.7, media: 135.8, minimo: 115.6, maximo: 167.5 },
-                { hora: '13:00', consumo: 175.2, media: 151.9, minimo: 129.3, maximo: 187.2 },
-                { hora: '14:00', consumo: 194.8, media: 168.9, minimo: 143.6, maximo: 208.1 },
-                { hora: '15:00', consumo: 198.5, media: 172.0, minimo: 146.4, maximo: 212.1 },
-                { hora: '16:00', consumo: 189.7, media: 164.4, minimo: 139.9, maximo: 202.7 },
-                { hora: '17:00', consumo: 172.4, media: 149.4, minimo: 127.1, maximo: 184.2 },
-                { hora: '18:00', consumo: 145.8, media: 126.4, minimo: 107.5, maximo: 155.8 },
-                { hora: '19:00', consumo: 128.5, media: 111.4, minimo: 94.8, maximo: 137.3 },
-                { hora: '20:00', consumo: 118.2, media: 102.5, minimo: 87.2, maximo: 126.3 },
-                { hora: '21:00', consumo: 112.7, media: 97.7, minimo: 83.1, maximo: 120.4 },
-                { hora: '22:00', consumo: 105.3, media: 91.3, minimo: 77.7, maximo: 112.5 },
-                { hora: '23:00', consumo: 101.2, media: 87.7, minimo: 74.6, maximo: 108.2 }
-            ],
+renderConsumoChart() {
+    const ctx = document.getElementById('consumoChart');
+    if (!ctx) return;
 
-            topDispositivos: [
-                { nome: 'Máquina CNC 01', consumo: 1250 },
-                { nome: 'Compressor 02', consumo: 980 },
-                { nome: 'Ar Condicionado 03', consumo: 750 },
-                { nome: 'Forno Industrial', consumo: 620 },
-                { nome: 'Esteira Transportadora', consumo: 480 }
-            ],
+    const dados = this.dashboardData.consumoPorHora || [];
+    if (dados.length === 0) return;
 
-            consumoPorSetor: [
-                { setor: 'Produção', consumo: 1250 },
-                { setor: 'Administrativo', consumo: 320 },
-                { setor: 'Logística', consumo: 580 },
-                { setor: 'Manutenção', consumo: 450 },
-                { setor: 'TI', consumo: 180 }
-            ],
+    const hours = dados.map(d => d.hora);
+    const consumoData = dados.map(d => d.consumo || 0);
+    const avgData = dados.map(d => d.media || 0);
+    const minData = dados.map(d => d.minimo || 0);
+    const maxData = dados.map(d => d.maximo || 0);
 
-            ultimasLeituras: [
+    this.chartConsumo = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: hours,
+            datasets: [
                 {
-                    data: '01/11/2025',
-                    hora: '14:35:22',
-                    dispositivo: 'Máquina CNC 01',
-                    corrente: 68.2,
-                    tensao: 220.3,
-                    potenciaAtiva: 15.01
+                    label: 'Consumo (kWh)',
+                    data: consumoData,
+                    borderColor: '#ffb703',
+                    backgroundColor: 'rgba(255, 183, 3, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4
                 },
                 {
-                    data: '01/11/2025',
-                    hora: '14:35:18',
-                    dispositivo: 'Forno Industrial',
-                    corrente: 96.8,
-                    tensao: 219.8,
-                    potenciaAtiva: 21.28
+                    label: 'Média',
+                    data: avgData,
+                    borderColor: '#219ebc',
+                    borderWidth: 1,
+                    borderDash: [5, 5],
+                    fill: false,
+                    tension: 0.4,
+                    pointRadius: 0
                 },
                 {
-                    data: '01/11/2025',
-                    hora: '14:35:15',
-                    dispositivo: 'Compressor 02',
-                    corrente: 49.3,
-                    tensao: 220.1,
-                    potenciaAtiva: 10.85
+                    label: 'Mínimo',
+                    data: minData,
+                    borderColor: '#06d6a0',
+                    borderWidth: 1,
+                    borderDash: [2, 2],
+                    fill: false,
+                    tension: 0.4,
+                    pointRadius: 0
                 },
                 {
-                    data: '01/11/2025',
-                    hora: '14:35:12',
-                    dispositivo: 'Ar Condicionado 03',
-                    corrente: 37.4,
-                    tensao: 220.5,
-                    potenciaAtiva: 8.24
-                },
-                {
-                    data: '01/11/2025',
-                    hora: '14:35:08',
-                    dispositivo: 'Esteira Transportadora',
-                    corrente: 24.2,
-                    tensao: 219.9,
-                    potenciaAtiva: 5.32
-                },
-                {
-                    data: '01/11/2025',
-                    hora: '14:35:05',
-                    dispositivo: 'Servidor TI',
-                    corrente: 21.1,
-                    tensao: 220.2,
-                    potenciaAtiva: 4.64
-                },
-                {
-                    data: '01/11/2025',
-                    hora: '14:35:02',
-                    dispositivo: 'Iluminação Galpão',
-                    corrente: 14.1,
-                    tensao: 220.4,
-                    potenciaAtiva: 3.10
-                },
-                {
-                    data: '01/11/2025',
-                    hora: '14:34:58',
-                    dispositivo: 'Máquina CNC 01',
-                    corrente: 67.9,
-                    tensao: 220.1,
-                    potenciaAtiva: 14.94
+                    label: 'Máximo',
+                    data: maxData,
+                    borderColor: '#ef476f',
+                    borderWidth: 1,
+                    borderDash: [2, 2],
+                    fill: false,
+                    tension: 0.4,
+                    pointRadius: 0
                 }
             ]
-        };
-    }
-
-    renderConsumoChart() {
-        const ctx = document.getElementById('consumoChart');
-        if (!ctx) return;
-
-        // Destruir gráfico anterior
-        if (this.chartConsumo) {
-            this.chartConsumo.destroy();
-        }
-
-        // Pegar período selecionado
-        const periodo = document.getElementById('chartPeriodConsumo')?.value || 'Hoje';
-
-        // Usar dados mockados
-        const dados = this.dashboardData.consumoPorHora;
-        const hours = dados.map(d => d.hora);
-        const consumoData = dados.map(d => d.consumo);
-        const avgData = dados.map(d => d.media);
-        const minData = dados.map(d => d.minimo);
-        const maxData = dados.map(d => d.maximo);
-
-        this.chartConsumo = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: hours,
-                datasets: [
-                    {
-                        label: 'Consumo (kWh)',
-                        data: consumoData,
-                        borderColor: '#ffb703',
-                        backgroundColor: 'rgba(255, 183, 3, 0.1)',
-                        borderWidth: 2,
-                        fill: true,
-                        tension: 0.4
-                    },
-                    {
-                        label: 'Média',
-                        data: avgData,
-                        borderColor: '#219ebc',
-                        borderWidth: 1,
-                        borderDash: [5, 5],
-                        fill: false,
-                        tension: 0.4,
-                        pointRadius: 0
-                    },
-                    {
-                        label: 'Mínimo',
-                        data: minData,
-                        borderColor: '#06d6a0',
-                        borderWidth: 1,
-                        borderDash: [2, 2],
-                        fill: false,
-                        tension: 0.4,
-                        pointRadius: 0
-                    },
-                    {
-                        label: 'Máximo',
-                        data: maxData,
-                        borderColor: '#ef476f',
-                        borderWidth: 1,
-                        borderDash: [2, 2],
-                        fill: false,
-                        tension: 0.4,
-                        pointRadius: 0
-                    }
-                ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: {
+                duration: 1500,
+                easing: 'easeInOutQuart'
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                animation: {
-                    duration: 1500,
-                    easing: 'easeInOutQuart'
+            interaction: {
+                mode: 'index',
+                intersect: false
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
                 },
-                interaction: {
-                    mode: 'index',
-                    intersect: false
-                },
-                plugins: {
-                    legend: {
+                tooltip: {
+                    callbacks: {
+                        label: function (context) {
+                            return context.dataset.label + ': ' + context.parsed.y.toFixed(2) + ' kWh';
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
                         display: true,
-                        position: 'top'
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function (context) {
-                                return context.dataset.label + ': ' + context.parsed.y + ' kWh';
-                            }
+                        text: 'Consumo (kWh)'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Hora do Dia'
+                    }
+                }
+            }
+        }
+    });
+};
+
+renderTopDispositivosChart() {
+    const ctx = document.getElementById('topDispositivosChart');
+    if (!ctx) return;
+
+    const dados = this.dashboardData.topDispositivos || [];
+    if (dados.length === 0) return;
+
+    const dispositivos = dados.map(d => d.nome);
+    const consumoDispositivos = dados.map(d => d.consumo || 0);
+
+    this.chartTopDispositivos = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: dispositivos,
+            datasets: [{
+                data: consumoDispositivos,
+                backgroundColor: [
+                    '#ef476f',
+                    '#fb8500',
+                    '#ffb703',
+                    '#219ebc',
+                    '#023047'
+                ],
+                borderColor: '#ffffff',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: {
+                duration: 1500,
+                easing: 'easeInOutQuart'
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'bottom',
+                    labels: {
+                        padding: 10,
+                        font: {
+                            size: 11
                         }
                     }
                 },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: 'Consumo (kWh)'
-                        }
-                    },
-                    x: {
-                        title: {
-                            display: true,
-                            text: 'Hora do Dia'
+                tooltip: {
+                    callbacks: {
+                        label: function (context) {
+                            const label = context.label || '';
+                            const value = context.parsed || 0;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                            return `${label}: ${value.toFixed(2)} kWh (${percentage}%)`;
                         }
                     }
                 }
             }
-        });
-    }
-
-    renderTopDispositivosChart() {
-        const ctx = document.getElementById('topDispositivosChart');
-        if (!ctx) return;
-
-        // Destruir gráfico anterior
-        if (this.chartTopDispositivos) {
-            this.chartTopDispositivos.destroy();
         }
+    });
+};
 
-        // Pegar período selecionado
-        const periodo = document.getElementById('chartPeriodDispositivos')?.value || 'Hoje';
+renderSetorChart() {
+    const ctx = document.getElementById('setorChart');
+    if (!ctx) return;
 
-        // Usar dados mockados
-        const dados = this.dashboardData.topDispositivos;
-        const dispositivos = dados.map(d => d.nome);
-        const consumoDispositivos = dados.map(d => d.consumo);
+    const dados = this.dashboardData.consumoPorSetor || [];
+    if (dados.length === 0) return;
 
-        this.chartTopDispositivos = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: dispositivos,
-                datasets: [{
-                    data: consumoDispositivos,
-                    backgroundColor: [
-                        '#ef476f',
-                        '#fb8500',
-                        '#ffb703',
-                        '#219ebc',
-                        '#023047'
-                    ],
-                    borderColor: '#ffffff',
-                    borderWidth: 2
-                }]
+    const setores = dados.map(d => d.setor);
+    const consumoSetores = dados.map(d => d.consumo || 0);
+
+    this.chartSetor = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: setores,
+            datasets: [{
+                data: consumoSetores,
+                backgroundColor: [
+                    '#ffb703',
+                    '#fb8500',
+                    '#f77f00',
+                    '#219ebc',
+                    '#023047'
+                ],
+                borderColor: '#ffffff',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: {
+                duration: 1500,
+                easing: 'easeInOutQuart'
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                animation: {
-                    duration: 1500,
-                    easing: 'easeInOutQuart'
-                },
-                plugins: {
-                    legend: {
-                        display: true,
-                        position: 'bottom',
-                        labels: {
-                            padding: 10,
-                            font: {
-                                size: 11
-                            }
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'bottom',
+                    labels: {
+                        padding: 10,
+                        font: {
+                            size: 11
                         }
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function (context) {
-                                const label = context.label || '';
-                                const value = context.parsed || 0;
-                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                const percentage = ((value / total) * 100).toFixed(1);
-                                return `${label}: ${value} kWh (${percentage}%)`;
-                            }
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function (context) {
+                            const label = context.label || '';
+                            const value = context.parsed || 0;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                            return `${label}: ${value.toFixed(2)} kWh (${percentage}%)`;
                         }
                     }
                 }
             }
-        });
-    }
-
-    renderSetorChart() {
-        const ctx = document.getElementById('setorChart');
-        if (!ctx) return;
-
-        // Destruir gráfico anterior
-        if (this.chartSetor) {
-            this.chartSetor.destroy();
         }
-
-        // Pegar período selecionado
-        const periodo = document.getElementById('chartPeriodSetor')?.value || 'Hoje';
-
-        // Usar dados mockados
-        const dados = this.dashboardData.consumoPorSetor;
-        const setores = dados.map(d => d.setor);
-        const consumoSetores = dados.map(d => d.consumo);
-
-        this.chartSetor = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: setores,
-                datasets: [{
-                    data: consumoSetores,
-                    backgroundColor: [
-                        '#ffb703',
-                        '#fb8500',
-                        '#f77f00',
-                        '#219ebc',
-                        '#023047'
-                    ],
-                    borderColor: '#ffffff',
-                    borderWidth: 2
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                animation: {
-                    duration: 1500,
-                    easing: 'easeInOutQuart'
-                },
-                plugins: {
-                    legend: {
-                        display: true,
-                        position: 'bottom',
-                        labels: {
-                            padding: 10,
-                            font: {
-                                size: 11
-                            }
-                        }
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function (context) {
-                                const label = context.label || '';
-                                const value = context.parsed || 0;
-                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                const percentage = ((value / total) * 100).toFixed(1);
-                                return `${label}: ${value} kWh (${percentage}%)`;
-                            }
-                        }
-                    }
-                }
-            }
-        });
-    }
+    });
+};
 
     async loadUsuarios() {
         const content = document.getElementById('page-content');
