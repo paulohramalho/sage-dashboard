@@ -1,3 +1,9 @@
+
+function unmask(value) {
+    return value.replace(/\D/g, "");
+}
+
+
 // Função auxiliar para decodificar o JWT
 function decodeJwt(token) {
     try {
@@ -243,14 +249,14 @@ document.getElementById('register-form').addEventListener('submit', async functi
 
     const form = event.target;
     const formData = {
-        cnpj: form.cnpj.value,
+        cnpj: unmask(form.cnpj.value),
         razaoSocial: form.razaoSocial.value,
         nomeFantasia: form.nomeFantasia.value,
-        telefone: form.telefone.value,
+        telefone: unmask(form.telefone.value),
         logradouro: form.logradouro.value,
         number: parseInt(form.number.value, 10),
         bairro: form.bairro.value,
-        zipCode: form.zipCode.value,
+        zipCode: unmask(form.zipCode.value),
         city: form.city.value,
         uf: form.uf.value,
         complemento: form.complemento.value,
@@ -258,6 +264,7 @@ document.getElementById('register-form').addEventListener('submit', async functi
         adminEmail: form.adminEmail.value,
         adminPassword: form.adminPassword.value
     };
+
 
     const response = await fetch(API_URL + '/company', {
         method: 'POST',
@@ -338,4 +345,51 @@ document.getElementById('back-to-login').addEventListener('click', function (eve
     document.getElementById('register-card').classList.add('hidden');
     document.getElementById('login-card').classList.remove('hidden');
     document.querySelector('.container').classList.remove('expanded');
+});
+
+// Funções de máscara
+function maskCNPJ(value) {
+    return value
+        .replace(/\D/g, '')
+        .replace(/^(\d{2})(\d)/, "$1.$2")
+        .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
+        .replace(/\.(\d{3})(\d)/, ".$1/$2")
+        .replace(/(\d{4})(\d)/, "$1-$2")
+        .slice(0, 18);
+}
+
+function maskPhone(value) {
+    const clean = value.replace(/\D/g, "");
+
+    if (clean.length <= 10) {
+        return clean
+            .replace(/(\d{2})(\d)/, "($1) $2")
+            .replace(/(\d{4})(\d)/, "$1-$2")
+            .slice(0, 14);
+    } else {
+        return clean
+            .replace(/(\d{2})(\d)/, "($1) $2")
+            .replace(/(\d{5})(\d)/, "$1-$2")
+            .slice(0, 15);
+    }
+}
+
+function maskZipCode(value) {
+    return value
+        .replace(/\D/g, '')
+        .replace(/(\d{5})(\d)/, "$1-$2")
+        .slice(0, 9);
+}
+
+// Aplicar máscara aos inputs específicos
+document.getElementById('cnpj').addEventListener('input', (e) => {
+    e.target.value = maskCNPJ(e.target.value);
+});
+
+document.getElementById('telefone').addEventListener('input', (e) => {
+    e.target.value = maskPhone(e.target.value);
+});
+
+document.getElementById('zipCode').addEventListener('input', (e) => {
+    e.target.value = maskZipCode(e.target.value);
 });

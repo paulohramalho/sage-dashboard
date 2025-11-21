@@ -128,7 +128,7 @@ async loadDashboard() {
             <h2>Dashboard</h2>
             <div style="text-align: center; padding: 50px;">
                 <i class="fas fa-spinner fa-spin" style="font-size: 48px; color: #ffb703;"></i>
-                <p style="margin-top: 20px; color: #666;">Carregando dados do dashboard...</p>
+                <p style="margin-top: 20px; color: #666;">Carregando dados...</p>
             </div>
         </div>
     `;
@@ -234,21 +234,13 @@ renderDashboard() {
                     <div class="stat-card-value">${stats.dispositivosAtivos || 0}</div>
                     <div class="stat-card-change">Monitorados</div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-card-icon"><i class="fas fa-dollar-sign"></i></div>
-                    <div class="stat-card-label">Custo Estimado</div>
-                    <div class="stat-card-value">
-                        R$ ${(stats.custoEstimado || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </div>
-                    <div class="stat-card-change">Mês atual</div>
-                </div>
             </div>
 
             <!-- Gráfico de Consumo por Hora (largura total) -->
             <div class="charts-grid-full">
                 <div class="chart-container">
                     <div class="chart-header">
-                        <h3 class="chart-title">Consumo por Hora</h3>
+                        <h3 class="chart-title">Evolução do Consumo (Hoje)</h3>
                     </div>
                     <div class="chart-body">
                         ${consumoPorHora.length > 0 ? 
@@ -263,7 +255,7 @@ renderDashboard() {
             <div class="charts-grid-2">
                 <div class="chart-container">
                     <div class="chart-header">
-                        <h3 class="chart-title">Top 5 Dispositivos Consumidores</h3>
+                        <h3 class="chart-title">Top 5 Dispositivos Consumidores (Hoje)</h3>
                     </div>
                     <div class="chart-body">
                         ${topDispositivos.length > 0 ? 
@@ -275,7 +267,7 @@ renderDashboard() {
 
                 <div class="chart-container">
                     <div class="chart-header">
-                        <h3 class="chart-title">Consumo por Setor</h3>
+                        <h3 class="chart-title">Consumo por Setor (Hoje)</h3>
                     </div>
                     <div class="chart-body">
                         ${consumoPorSetor.length > 0 ? 
@@ -375,36 +367,6 @@ renderConsumoChart() {
                     borderWidth: 2,
                     fill: true,
                     tension: 0.4
-                },
-                {
-                    label: 'Média',
-                    data: avgData,
-                    borderColor: '#219ebc',
-                    borderWidth: 1,
-                    borderDash: [5, 5],
-                    fill: false,
-                    tension: 0.4,
-                    pointRadius: 0
-                },
-                {
-                    label: 'Mínimo',
-                    data: minData,
-                    borderColor: '#06d6a0',
-                    borderWidth: 1,
-                    borderDash: [2, 2],
-                    fill: false,
-                    tension: 0.4,
-                    pointRadius: 0
-                },
-                {
-                    label: 'Máximo',
-                    data: maxData,
-                    borderColor: '#ef476f',
-                    borderWidth: 1,
-                    borderDash: [2, 2],
-                    fill: false,
-                    tension: 0.4,
-                    pointRadius: 0
                 }
             ]
         },
