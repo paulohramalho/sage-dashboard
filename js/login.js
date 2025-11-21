@@ -1,6 +1,3 @@
-// Variável global para armazenar o ROLE do usuário
-let USER_ROLE = null;
-
 // Função auxiliar para decodificar o JWT
 function decodeJwt(token) {
     try {
@@ -216,12 +213,13 @@ document.getElementById('login-form').addEventListener('submit', async function 
             setCookie('USER_TOKEN', token, 7);
 
             const payload = decodeJwt(token);
-            if (payload && payload.ROLE) {
-                USER_ROLE = payload.ROLE;
+            if (payload) {
+                localStorage.setItem("USER_ROLE", payload.role);
+                localStorage.setItem("USERNAME", payload.sub);
             }
 
             setTimeout(() => {
-                window.location.href = '/';
+                window.location.href = '/dashboard';
             }, 1500);
         } else {
             if (response.status === 401) {
@@ -341,5 +339,3 @@ document.getElementById('back-to-login').addEventListener('click', function (eve
     document.getElementById('login-card').classList.remove('hidden');
     document.querySelector('.container').classList.remove('expanded');
 });
-
-window.USER_ROLE = USER_ROLE

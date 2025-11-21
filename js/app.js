@@ -1,5 +1,8 @@
 // ===== APLICAÇÃO PRINCIPAL =====
 
+document.querySelector('#username-display-component').textContent = localStorage.getItem("USERNAME");
+document.querySelector('#username-avatar').textContent = localStorage.getItem("USERNAME").charAt(0).toUpperCase();
+
 class App {
     constructor() {
         this.currentPage = 'dashboard';
@@ -202,10 +205,7 @@ renderDashboard() {
     content.innerHTML = `
         <div class="dashboard-page">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h2>Dashboard</h2>
-                <button class="btn btn-outline" onclick="app.loadDashboard()">
-                    <i class="fas fa-sync-alt"></i> Atualizar
-                </button>
+                <h2>Visão Geral</h2>
             </div>
 
             <!-- Cards de Estatísticas -->
@@ -573,84 +573,142 @@ renderSetorChart() {
     });
 };
 
-    async loadUsuarios() {
-        const content = document.getElementById('page-content');
-
-        // Tenta carregar dados da API
+    async loadUsuarios(page = 0, name = '') {
         try {
-            // Assumindo que o endpoint para usuários é '/usuarios'
-            const usuarios = await callApi('/usuarios');
-            this.data.usuarios = usuarios; // Atualiza os dados mockados com os dados da API
+            this.currentSearchUsuarios = name;
+            const size = 10;
+
+            const query = new URLSearchParams({
+                name: name || '',
+                page,
+                size
+            }).toString();
+
+            const response = await callApi(`/user?${query}`, { method: 'GET' });
+
+            // Cria a paginação se ainda não existir
+            if (!this.usuariosPagination) {
+                this.usuariosPagination = new Pagination('usuarios', size);
+                this.usuariosPagination.setRemoteLoader((newPage) => {
+                    const searchTerm = document.getElementById('searchUsuarios')?.value || '';
+                    return this.loadUsuarios(newPage, searchTerm);
+                });
+            }
+
+            // Atualiza dados da paginação
+            this.usuariosPagination.updateFromApiResponse(response);
+
+            // Armazena os usuários recebidos
+            this.data = this.data || {};
+            this.data.usuarios = response.content || [];
+
+            // Renderiza a tabela
+            this.renderUsuariosTable();
+
         } catch (error) {
-            // Exibe o erro na tela se a chamada falhar
+            console.error("Erro ao carregar usuários:", error);
             exibirErro(`Erro ao carregar usuários: ${error.message}`);
-            // Se falhar, usa os dados mockados existentes (ou deixa vazio se preferir)
         }
-
-        content.innerHTML = `
-            <div class="usuarios-page">
-                <div class="card-header">
-                    <h2>Gerenciar Usuários</h2>
-                    <button class="btn btn-primary" onclick="app.openUsuarioForm()">+ Novo Usuário</button>
-                </div>
-
-                <div class="table-container">
-                    <div class="table-header">
-                        <h3>Lista de Usuários</h3>
-                        <div class="table-search">
-                            <input type="text" placeholder="Buscar usuário..." id="searchUsuarios">
-                        </div>
-                    </div>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Nome</th>
-                                <th>Email</th>
-                                <th>Perfil</th>
-                                <th>Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${this.data.usuarios.length === 0 ? `
-                                <tr><td colspan="5" style="text-align: center;">Nenhum usuário encontrado.</td></tr>
-                            ` : this.data.usuarios.map(u => `
-                                <tr>
-                                    <td>${u.nome}</td>
-                                    <td>${u.email}</td>
-                                    <td><span class="badge badge-primary">${u.role}</span></td>
-                                        <td>
-                                            <div class="cell-actions">
-                                                <button class="action-btn action-btn-edit" 
-                                                        onclick="app.editSetor('${s.id}')">
-                                                    <i class="fas fa-edit"></i>
-                                                </button>
-                                                <button class="action-btn action-btn-delete" 
-                                                        onclick="app.deleteSetor('${s.id}')">
-                                                    <i class="fas fa-trash-alt"></i>
-                                                </button>
-                                            </div>
-                                        </td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        `;
-
-        document.getElementById('searchUsuarios')?.addEventListener('keyup', (e) => {
-            const search = e.target.value.toLowerCase();
-            document.querySelectorAll('tbody tr').forEach(row => {
-                const text = row.textContent.toLowerCase();
-                row.style.display = text.includes(search) ? '' : 'none';
-            });
-        });
     }
 
-    openUsuarioForm(usuarioId = null) {
+    renderUsuariosTable() {
+        const content = document.getElementById('page-content');
+        const items = this.data?.usuarios || [];
+
+        // Verifica se é a primeira renderização
+        const isFirstRender = !document.getElementById('searchUsuarios');
+
+        if (isFirstRender) {
+            // Renderiza tudo pela primeira vez
+            content.innerHTML = `
+                <div class="usuarios-page">
+                    <div class="card-header">
+                        <h2>Gerenciar Usuários</h2>
+                        <button class="btn btn-primary" onclick="app.openUsuarioForm()">+ Novo Usuário</button>
+                    </div>
+
+                    <div class="table-container">
+                        <div class="table-header">
+                            <h3>Lista de Usuários</h3>
+                            <div class="table-search">
+                                <input type="text" placeholder="Buscar usuário..." id="searchUsuarios" value="${this.currentSearchUsuarios || ''}">
+                            </div>
+                        </div>
+
+                        <table id="usuariosTable">
+                            <thead>
+                                <tr>
+                                    <th>Nome</th>
+                                    <th>Email</th>
+                                    <th>Perfil</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usuariosTableBody">
+                            </tbody>
+                        </table>
+                        <div class="pagination" id="usuariosPagination">
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Adiciona o evento de busca apenas na primeira vez
+            const input = document.getElementById('searchUsuarios');
+            input.oninput = this.debounce(async (e) => {
+                const searchTerm = e.target.value.trim();
+                await this.loadUsuarios(0, searchTerm);
+            }, 400);
+        }
+
+        // Atualiza apenas o tbody
+        const tbody = document.getElementById('usuariosTableBody');
+        tbody.innerHTML = items.length > 0 ? items.map(u => `
+            <tr>
+                <td><strong>${u.name || '-'}</strong></td>
+                <td>${u.email || '-'}</td>
+                <td><span class="badge badge-primary">${u.role || '-'}</span></td>
+                <td>
+                    <div class="cell-actions">
+                        <button class="action-btn action-btn-edit" 
+                                onclick="app.editUsuario('${u.id}')">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="action-btn action-btn-delete" 
+                                onclick="app.deleteUsuario('${u.id}')">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `).join('') : `
+            <tr>
+                <td colspan="4" style="text-align: center; padding: 40px; color: #999;">
+                    Nenhum usuário encontrado
+                </td>
+            </tr>
+        `;
+
+        // Atualiza apenas a paginação
+        const paginationDiv = document.getElementById('usuariosPagination');
+        paginationDiv.innerHTML = this.usuariosPagination.renderPaginationControls();
+    }
+
+    async openUsuarioForm(usuarioId = null) {
         const modal = document.getElementById('formModal');
         const form = document.getElementById('modal-form');
-        const usuario = usuarioId ? this.data.usuarios.find(u => u.id === usuarioId) : null;
+        let usuario = null;
+
+        // Se for edição, busca o usuário pelo ID
+        if (usuarioId) {
+            try {
+                usuario = await callApi(`/user/${usuarioId}`, { method: 'GET' });
+            } catch (error) {
+                console.error('Erro ao carregar usuário:', error);
+                exibirErro('Erro ao carregar usuário');
+                return;
+            }
+        }
 
         form.innerHTML = `
             <div class="form-card">
@@ -662,26 +720,37 @@ renderSetorChart() {
                     <div class="form-row">
                         <div class="form-group">
                             <label>Nome <span class="required">*</span></label>
-                            <input type="text" name="nome" value="${usuario ? usuario.nome : ''}">
+                            <input type="text" name="name" value="${usuario ? usuario.name : ''}" required>
                         </div>
                         <div class="form-group">
                             <label>Email <span class="required">*</span></label>
-                            <input type="email" name="email" value="${usuario ? usuario.email : ''}">
+                            <input type="email" name="email" value="${usuario ? usuario.email : ''}" required>
                         </div>
                     </div>
                     <div class="form-group">
                         <label>Perfil <span class="required">*</span></label>
-                        <select name="role">
-                            <option value="">Selecione um perfil</option>
-                            <option value="Admin" ${usuario && usuario.role === 'Admin' ? 'selected' : ''}>Admin</option>
-                            <option value="Usuário" ${usuario && usuario.role === 'Usuário' ? 'selected' : ''}>Usuário</option>
-                            <option value="Visualizador" ${usuario && usuario.role === 'Visualizador' ? 'selected' : ''}>Visualizador</option>
+                        <select name="role" required>
+                            <option value="USER" ${usuario && usuario.role === 'USER' ? 'selected' : ''}>Usuário</option>
+                            <option value="ADMIN" ${usuario && usuario.role === 'ADMIN' ? 'selected' : ''}>Administrador</option>
                         </select>
                     </div>
                     <div class="form-group">
                         <label>Senha ${usuario ? '' : '<span class="required">*</span>'}</label>
-                        <input type="password" name="senha" ${usuario ? '' : 'required'}>
+                        <input type="password" name="password" id="userPassword" ${usuario ? '' : 'required'}>
                         ${usuario ? '<small>Deixe em branco para manter a senha atual</small>' : ''}
+                        
+                        <div id="passwordRequirements" class="password-requirements">
+                            <p><strong>A senha deve conter:</strong></p>
+                            <ul>
+                                <li id="req-length"><i class="fas fa-times-circle"></i> No mínimo 8 caracteres</li>
+                                <li id="req-uppercase"><i class="fas fa-times-circle"></i> Pelo menos uma letra maiúscula</li>
+                                <li id="req-special"><i class="fas fa-times-circle"></i> Pelo menos um caractere especial (!@#$%^&*)</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Confirmar Senha ${usuario ? '' : '<span class="required">*</span>'}</label>
+                        <input type="password" name="passwordConfirm" id="userPasswordConfirm" ${usuario ? '' : 'required'}>
                     </div>
                     <div class="form-actions">
                         <button type="button" class="btn btn-outline" onclick="document.getElementById('formModal').classList.remove('show')">Cancelar</button>
@@ -690,12 +759,178 @@ renderSetorChart() {
                 </form>
             </div>
         `;
+
         modal.classList.add('show');
 
-        document.getElementById('usuarioForm').addEventListener('submit', (e) => {
+        // ========== VALIDAÇÃO DE SENHA EM TEMPO REAL ==========
+        const passwordInput = document.getElementById('userPassword');
+        const passwordConfirmInput = document.getElementById('userPasswordConfirm');
+        const requirementsBox = document.getElementById('passwordRequirements');
+
+        // Função para validar se as senhas coincidem
+        function checkPasswordMatch() {
+            const password = passwordInput.value;
+            const confirmPassword = passwordConfirmInput.value;
+
+            if (confirmPassword === '') {
+                passwordConfirmInput.style.borderColor = '';
+                return;
+            }
+
+            if (password === confirmPassword) {
+                passwordConfirmInput.style.borderColor = '#28a745';
+            } else {
+                passwordConfirmInput.style.borderColor = '#dc3545';
+            }
+        }
+
+        // Mostra a caixa de requisitos ao focar no campo
+        passwordInput.addEventListener('focus', () => {
+            requirementsBox.classList.add('show');
+        });
+
+        // Esconde a caixa quando o campo perde o foco (com pequeno delay)
+        passwordInput.addEventListener('blur', () => {
+            if (passwordInput.value.trim() !== "") {
+                setTimeout(() => {
+                    requirementsBox.classList.remove('show');
+                }, 200);
+            }
+        });
+
+        // Valida em tempo real enquanto o usuário digita
+        passwordInput.addEventListener('input', (e) => {
+            const password = e.target.value;
+
+            // Validação: Mínimo 8 caracteres
+            const reqLength = document.getElementById('req-length');
+            if (password.length >= 8) {
+                reqLength.classList.add('valid');
+                reqLength.querySelector('i').className = 'fas fa-check-circle';
+            } else {
+                reqLength.classList.remove('valid');
+                reqLength.querySelector('i').className = 'fas fa-times-circle';
+            }
+
+            // Validação: Pelo menos uma letra maiúscula
+            const reqUppercase = document.getElementById('req-uppercase');
+            if (/[A-Z]/.test(password)) {
+                reqUppercase.classList.add('valid');
+                reqUppercase.querySelector('i').className = 'fas fa-check-circle';
+            } else {
+                reqUppercase.classList.remove('valid');
+                reqUppercase.querySelector('i').className = 'fas fa-times-circle';
+            }
+
+            // Validação: Pelo menos um caractere especial
+            const reqSpecial = document.getElementById('req-special');
+            if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+                reqSpecial.classList.add('valid');
+                reqSpecial.querySelector('i').className = 'fas fa-check-circle';
+            } else {
+                reqSpecial.classList.remove('valid');
+                reqSpecial.querySelector('i').className = 'fas fa-times-circle';
+            }
+
+            // Valida se as senhas coincidem
+            checkPasswordMatch();
+        });
+
+        // Valida confirmação de senha em tempo real
+        passwordConfirmInput.addEventListener('input', checkPasswordMatch);
+        passwordConfirmInput.addEventListener('blur', checkPasswordMatch);
+
+        // ========== FUNÇÃO DE VALIDAÇÃO DE SENHA ==========
+        function validatePassword(password) {
+            const minLength = password.length >= 8;
+            const hasUppercase = /[A-Z]/.test(password);
+            const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+            return minLength && hasUppercase && hasSpecial;
+        }
+
+        // ========== SUBMISSÃO DO FORMULÁRIO ==========
+        document.getElementById('usuarioForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            alert(`Usuário ${usuario ? 'atualizado' : 'salvo'} com sucesso!`);
-            modal.classList.remove('show');
+
+            const formData = new FormData(e.target);
+            const payload = Object.fromEntries(formData.entries());
+            const passwordConfirm = payload.passwordConfirm;
+
+            // Remove passwordConfirm do payload (não será enviado para API)
+            delete payload.passwordConfirm;
+
+            // Validação para novos usuários
+            if (!usuario) {
+                // Verifica se a senha não está vazia
+                if (!payload.password || payload.password.trim() === '') {
+                    exibirErro('A senha não pode ser vazia.');
+                    passwordInput.focus();
+                    return;
+                }
+
+                // Verifica os requisitos da senha
+                if (!validatePassword(payload.password)) {
+                    exibirErro('A senha não atende aos requisitos mínimos.');
+                    passwordInput.focus();
+                    requirementsBox.classList.add('show');
+                    return;
+                }
+
+                // Verifica se as senhas coincidem
+                if (payload.password !== passwordConfirm) {
+                    exibirErro('As senhas não coincidem.');
+                    document.getElementById('userPasswordConfirm').focus();
+                    return;
+                }
+            }
+
+            // Validação para edição (se senha foi preenchida)
+            if (usuario && payload.password && payload.password.trim() !== '') {
+                // Verifica os requisitos da senha
+                if (!validatePassword(payload.password)) {
+                    exibirErro('A senha não atende aos requisitos mínimos.');
+                    passwordInput.focus();
+                    requirementsBox.classList.add('show');
+                    return;
+                }
+
+                // Verifica se as senhas coincidem
+                if (payload.password !== passwordConfirm) {
+                    exibirErro('As senhas não coincidem.');
+                    document.getElementById('userPasswordConfirm').focus();
+                    return;
+                }
+            }
+
+            // Remove senha vazia em edições
+            if (usuario && !payload.password) {
+                delete payload.password;
+            }
+
+            try {
+                if (usuarioId) {
+                    // Atualizar usuário existente (PUT)
+                    await callApi(`/user/${usuarioId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    exibirSucesso('Usuário atualizado com sucesso!');
+                } else {
+                    // Criar novo usuário (POST)
+                    await callApi(`/user`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    exibirSucesso('Usuário criado com sucesso!');
+                }
+
+                modal.classList.remove('show');
+                await this.loadUsuarios(0);
+            } catch (error) {
+                console.error('Erro ao salvar usuário:', error);
+            }
         });
     }
 
@@ -703,10 +938,23 @@ renderSetorChart() {
         this.openUsuarioForm(id);
     }
 
-    deleteUsuario(id) {
-        if (confirm('Tem certeza que deseja deletar este usuário?')) {
-            alert(`Usuário ${id} deletado com sucesso!`);
-        }
+    async deleteUsuario(id) {
+        exibirConfirmacao({
+            title: 'Deletar Usuário',
+            message: 'Tem certeza que deseja deletar este usuário? Esta ação não pode ser desfeita.',
+            type: 'danger',
+            confirmText: 'Sim, deletar',
+            cancelText: 'Cancelar',
+            onConfirm: async () => {
+                try {
+                    await callApi(`/user/${id}`, { method: 'DELETE' });
+                    exibirSucesso('Usuário deletado com sucesso!');
+                    await this.loadUsuarios(0);
+                } catch (error) {
+                    console.error('Erro ao deletar usuário:', error);
+                }
+            }
+        });
     }
 
     // =============================
